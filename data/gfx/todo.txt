@@ -1,0 +1,1 @@
+Put all final artwork, sprites etc. used by game in here.
