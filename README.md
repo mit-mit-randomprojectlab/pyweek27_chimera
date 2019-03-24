@@ -1,2 +1,2 @@
-# pyweek27_chimera
-PyWeek 27 entry by Team Chimera
+# "A Game"
+a PyWeek 27 entry by Team Chimera
