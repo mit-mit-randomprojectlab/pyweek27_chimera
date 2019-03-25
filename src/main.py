@@ -4,6 +4,8 @@
 main.py: Main entry point for game
 """
 
+from builtins import range
+
 import os
 import pygame
 from pygame.locals import *
