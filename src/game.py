@@ -11,10 +11,37 @@ import pygame
 from pygame.locals import *
 from gamedirector import *
 
-import resources
-
 import random
 from math import *
+
+import resources
+import tilemap
+
+class Camera(object):
+	def __init__(self,parent,screen_size,stickyness=0.33):
+		self.parent = parent
+		self.x = -1
+		self.y = -1
+		self.w_view = screen_size[0]
+		self.h_view = screen_size[1]
+		self.stickyness = stickyness
+	def UpdateCamera(self,focus):
+		if (focus[0] - self.x) > self.stickyness*self.w_view/2:
+			self.x = focus[0] - self.stickyness*self.w_view/2
+		elif (focus[0] - self.x) < -self.stickyness*self.w_view/2:
+			self.x = focus[0] + self.stickyness*self.w_view/2
+		if (focus[1] - self.y) > self.stickyness*self.h_view/2:
+			self.y = focus[1] - self.stickyness*self.h_view/2
+		elif (focus[1] - self.y) < -self.stickyness*self.h_view/2:
+			self.y = focus[1] + self.stickyness*self.h_view/2
+		if self.x < self.w_view/2:
+			self.x = self.w_view/2
+		elif self.x > (self.xlim-self.w_view/2):
+			self.x = self.xlim-self.w_view/2
+		if self.y < self.h_view/2:
+			self.y = self.h_view/2
+		elif self.y > (self.ylim-self.h_view/2):
+			self.y = self.ylim-self.h_view/2
 
 class MainGame(GameScene):
     def __init__(self, director, window_size):
@@ -26,9 +53,27 @@ class MainGame(GameScene):
         self.frsamples = 0
     
     def on_switchto(self, switchtoargs):
-        self.data = 1
+        
+        # Check if un-pause or resetting level
+        lvlreset = switchtoargs[0]
+        if not lvlreset:
+            return
+        level_id = switchtoargs[1]
+        
+        # Initialise objects
+        self.camera = Camera(self,self.window_size)
+        self.tiledlayers = tilemap.TiledLayers(self)
+        
+        # load level data
+        self.tiledlayers.init_level(level_id)
     
     def on_update(self):
+        
+        # Update player motions
+        
+        # Update camera
+        #self.camera.UpdateCamera([int(self.submarine.body.position[0]),-int(self.submarine.body.position[1])])
+        self.camera.UpdateCamera([0,0])
         
         # framerate tracking
         self.frsamples += 1
@@ -43,7 +88,9 @@ class MainGame(GameScene):
                 self.director.change_scene(None, [])
     			    
     def draw(self, screen):
-        screen.fill((255,255,255))
+        screen.fill((0,0,0))
+        self.tiledlayers.RenderBGLayer(screen)
+        self.tiledlayers.RenderFGLayer(screen)
     
     def on_draw(self, screen):
         self.draw(screen)

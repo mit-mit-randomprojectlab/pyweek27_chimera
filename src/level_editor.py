@@ -42,6 +42,7 @@ def init_resources(mainpath):
 	font_draw = pygame.font.SysFont("arial", 12)
 	resources['text_occ'] = font_draw.render('Occupancy Mode', True, (255,255,255))
 	resources['text_bg'] = font_draw.render('Background Tile Mode', True, (255,255,255))
+	resources['text_mg'] = font_draw.render('Midground Tile Mode', True, (255,255,255))
 	resources['text_fg'] = font_draw.render('Foreground Tile Mode', True, (255,255,255))
 	resources['text_item'] = font_draw.render('Item Mode (q to quit back to tiles)', True, (255,255,255))
 
@@ -87,7 +88,7 @@ def main(mainpath):
     framerate = 30
     screen_res = (1200,700)
     
-    window_title = "Level Editor: n/l/s (new/load/save), o (occupancy layer), b (background tiles), f (foreground tiles), g (toggle guide lines), a (auto-tiler), i (items)"
+    window_title = "Level Editor: n/l/s (new/load/save), o (occupancy layer), b (background), m (midground), f (foreground), g (toggle guide lines), a (auto-tiler), i (items)"
     dir = GameDirector(window_title, screen_res, framerate)
     
     # Load resources
@@ -101,34 +102,6 @@ def main(mainpath):
     dir.change_scene('level_edit', [])
     dir.loop()
 
-"""
-class LevelData(object):
-    
-    def __init__(self):
-        pass
-    
-    def AssignMonstersLayer(self,i,j):
-        if i < 0 or i >= self.map_size[0] or j < 0 or j >= self.map_size[1]:
-            return
-        ind = monster_list.index(self.monsterlayer[self.map_size[0]*j+i])
-        ind_new = (ind+1) % len(monster_list)
-        self.monsterlayer[self.map_size[0]*j+i] = monster_list[ind_new]
-    
-    def AssignItemLayer(self,i,j):
-        if i < 0 or i >= self.map_size[0] or j < 0 or j >= self.map_size[1]:
-            return
-        ind = item_list.index(self.itemlayer[self.map_size[0]*j+i])
-        ind_new = (ind+1) % len(item_list)
-        self.itemlayer[self.map_size[0]*j+i] = item_list[ind_new]
-    
-    def AssignTriggerLayer(self,i,j):
-        if i < 0 or i >= self.map_size[0] or j < 0 or j >= self.map_size[1]:
-        	return
-        ind = trigger_list.index(self.triggerlayer[self.map_size[0]*j+i])
-        ind_new = (ind+1) % len(trigger_list)
-        self.triggerlayer[self.map_size[0]*j+i] = trigger_list[ind_new]
-"""
-
 class LevelEditor(GameScene):
     def __init__(self, director, window_size):
         super(LevelEditor, self).__init__(director)
@@ -141,13 +114,12 @@ class LevelEditor(GameScene):
         self.mouse_pos = (0,0)
         self.draw_type = -1
         self.draw_type_item = 'null'
-        self.tilemode = 0
+        self.tilemode = 0 # 0: occupancy, 1: bg, 2: mg, 3: fg
         self.objectdrawtype = 'none'
         self.tilesize = 16
         self.zoom = 0
         self.guides = False
         
-        #self.level = level_data.LevelData()
         self.level = None
         
         self.npal_x = 10
@@ -186,6 +158,13 @@ class LevelEditor(GameScene):
     		return
     	self.level.data['tilemap']['layer_b'][msx*j+i] = value
     
+    def AssignMGTile(self,i,j,value):
+    	msx = self.level.data['tilemap']['size'][0]
+    	msy = self.level.data['tilemap']['size'][1]
+    	if i < 0 or i >= msx or j < 0 or j >= msy:
+    		return
+    	self.level.data['tilemap']['layer_m'][msx*j+i] = value
+    
     def AssignFGTile(self,i,j,value):
     	msx = self.level.data['tilemap']['size'][0]
     	msy = self.level.data['tilemap']['size'][1]
@@ -210,6 +189,7 @@ class LevelEditor(GameScene):
     	msy = self.level.data['tilemap']['size'][1]
     	layerocc = self.level.data['tilemap']['layerocc']
     	layer_b = self.level.data['tilemap']['layer_b']
+    	layer_m = self.level.data['tilemap']['layer_m']
     	layer_f = self.level.data['tilemap']['layer_f']
     	for i in range(msx):
     		for j in range(msy):
@@ -225,7 +205,8 @@ class LevelEditor(GameScene):
     				if j >= 1:
     					self.AssignFGTile(i,j-1,1) # TODO: set based on connectivity to surrounds
     			elif layerocc[msx*j+i] == 2:
-    				self.AssignBGTile(i,j,16)
+    				self.AssignBGTile(i,j,26)
+    				self.AssignMGTile(i,j,16)
     				if j >= 1:
     					self.AssignFGTile(i,j-1,6) # TODO: set based on connectivity to surrounds
     
@@ -279,14 +260,18 @@ class LevelEditor(GameScene):
         		if self.level == None:
         			continue
         		self.tilemode = 0
-        	if event.type == KEYDOWN and event.key == K_b: # tile mode
+        	if event.type == KEYDOWN and event.key == K_b: # bg tile mode
         		if self.level == None:
         			continue
         		self.tilemode = 1
-        	if event.type == KEYDOWN and event.key == K_f: # tile foreground mode
+        	if event.type == KEYDOWN and event.key == K_m: # mg tile mode
         		if self.level == None:
         			continue
         		self.tilemode = 2
+        	if event.type == KEYDOWN and event.key == K_f: # tile foreground mode
+        		if self.level == None:
+        			continue
+        		self.tilemode = 3
         	if event.type == KEYDOWN and event.key == K_g: # toggle guides on/off
         		if self.level == None:
         			continue
@@ -294,13 +279,8 @@ class LevelEditor(GameScene):
         			self.guides = False
         		else:
         			self.guides = True
-        			AutoUpdateTileLayers
         	if event.type == KEYDOWN and event.key == K_a: # toggle guides on/off
         		self.AutoUpdateTileLayers()
-        	if event.type == KEYDOWN and event.key == K_m:
-        		if self.level == None:
-        			continue
-        		self.objectdrawtype = 'monsters'
         	if event.type == KEYDOWN and event.key == K_i:
         		if self.level == None:
         			continue
@@ -327,14 +307,16 @@ class LevelEditor(GameScene):
         						elif self.tilemode == 1:
         							self.AssignBGTile(coords[0],coords[1],self.draw_type)
         						elif self.tilemode == 2:
+        							self.AssignMGTile(coords[0],coords[1],self.draw_type)
+        						elif self.tilemode == 3:
         							self.AssignFGTile(coords[0],coords[1],self.draw_type)
         					elif self.objectdrawtype == 'item':
-        						pass
-        						#self.level.AssignItemLayer(coords[0],coords[1])
+        						pass # TODO: add item support
+        						
         		if (self.mouse_pos[0] > self.draw_offset_palette[0] and self.mouse_pos[1] < (self.draw_offset_palette[1]+self.npal_y*self.tilesize)):
         			coords = (int((self.mouse_pos[0]-self.draw_offset_palette[0])/self.tilesize), int((self.mouse_pos[1]-self.draw_offset_palette[1])/self.tilesize))
         			if coords[0] >= 0 and coords[0] < self.npal_x and coords[1] >= 0 and coords[1] < self.npal_y:
-        				self.draw_type = int(coords[0]+self.npal_x*coords[1])
+        				self.draw_type = coords[0]+self.npal_x*coords[1]
     
     def on_draw(self, screen):
         
@@ -351,7 +333,7 @@ class LevelEditor(GameScene):
         screen.blit(self.palette, self.draw_offset_palette)
         if self.draw_type >= 0:
             pygame.draw.rect(screen,(255,0,0), \
-                pygame.Rect((self.draw_offset_palette[0]+self.tilesize*(self.draw_type%self.npal_x),self.draw_offset_palette[1]+self.tilesize*(self.draw_type/self.npal_x)),(self.tilesize,self.tilesize)),1)
+                pygame.Rect((self.draw_offset_palette[0]+self.tilesize*(self.draw_type%self.npal_x),self.draw_offset_palette[1]+self.tilesize*int(self.draw_type/self.npal_x)),(self.tilesize,self.tilesize)),1)
         
         if self.level == None:  # skip rest if no level loaded yet
         	return
@@ -377,11 +359,18 @@ class LevelEditor(GameScene):
         			elif occval == 2:
         				pygame.draw.rect(self.mainwindowsurf, (0,0,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
         
-        elif self.tilemode == 1: # draw background and foreground tiles
+        elif self.tilemode == 1: # draw background, midground and foreground tiles
         	for i in range(msx):
         		for j in range(msy):
         			coords = [i*self.tilesize, j*self.tilesize]
         			tileval = self.level.data['tilemap']['layer_b'][msx*j+i]
+        			if tileval >= 0:
+        				tilecoords = resources['tiles_coords'][tileval]
+        				self.mainwindowsurf.blit(resources['tiles'], (coords[0],coords[1]), area=tilecoords)
+        	for i in range(msx):
+        		for j in range(msy):
+        			coords = [i*self.tilesize, j*self.tilesize]
+        			tileval = self.level.data['tilemap']['layer_m'][msx*j+i]
         			if tileval >= 0:
         				tilecoords = resources['tiles_coords'][tileval]
         				self.mainwindowsurf.blit(resources['tiles'], (coords[0],coords[1]), area=tilecoords)
@@ -393,7 +382,16 @@ class LevelEditor(GameScene):
         				tilecoords = resources['tiles_coords'][tileval]
         				self.mainwindowsurf.blit(resources['tiles'], (coords[0],coords[1]), area=tilecoords)
         
-        elif self.tilemode == 2: # draw foreground tiles
+        elif self.tilemode == 2: # draw midground tiles
+        	for i in range(msx):
+        		for j in range(msy):
+        			coords = [i*self.tilesize, j*self.tilesize]
+        			tileval = self.level.data['tilemap']['layer_m'][msx*j+i]
+        			if tileval >= 0:
+        				tilecoords = resources['tiles_coords'][tileval]
+        				self.mainwindowsurf.blit(resources['tiles'], (coords[0],coords[1]), area=tilecoords)
+        
+        elif self.tilemode == 3: # draw foreground tiles
         	for i in range(msx):
         		for j in range(msy):
         			coords = [i*self.tilesize, j*self.tilesize]
@@ -416,6 +414,8 @@ class LevelEditor(GameScene):
         	elif self.tilemode == 1:
         		screen.blit(resources['text_bg'],(sx/2,10))
         	elif self.tilemode == 2:
+        		screen.blit(resources['text_mg'],(sx/2,10))
+        	elif self.tilemode == 3:
         		screen.blit(resources['text_fg'],(sx/2,10))
         else:
         	if self.objectdrawtype == 'item':
@@ -432,50 +432,4 @@ class LevelEditor(GameScene):
         		end_pos = (offx+msx*ts,offy+i*ts)
         		pygame.draw.line(screen, (255,0,0), start_pos, end_pos)
         
-        """
-        if self.objectdrawtype == 'monsters':
-            for i in range(self.level.map_size[0]):
-                for j in range(self.level.map_size[1]):
-                    coords = [self.draw_offset[0]+i*self.tilesize, self.draw_offset[1]+j*self.tilesize]
-                    monsterval = self.level.monsterlayer[self.level.map_size[0]*j+i]
-                    ind = monster_list.index(monsterval)
-                    if ind == 1:
-                        pygame.draw.rect(screen, (255,255,0), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 2:
-                        pygame.draw.rect(screen, (0,255,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 3:
-                        pygame.draw.rect(screen, (255,0,0), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 4:
-                        pygame.draw.rect(screen, (0,0,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 5:
-                        pygame.draw.rect(screen, (255,255,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-        elif self.objectdrawtype == 'item':
-            for i in range(self.level.map_size[0]):
-                for j in range(self.level.map_size[1]):
-                    coords = [self.draw_offset[0]+i*self.tilesize, self.draw_offset[1]+j*self.tilesize]
-                    itemval = self.level.itemlayer[self.level.map_size[0]*j+i]
-                    ind = item_list.index(itemval)
-                    if ind == 1:
-                        pygame.draw.rect(screen, (255,0,0), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 2:
-                        pygame.draw.rect(screen, (0,255,0), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 3:
-                        pygame.draw.rect(screen, (0,0,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 4:
-                        pygame.draw.rect(screen, (0,255,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-        elif self.objectdrawtype == 'trigger':
-            for i in range(self.level.map_size[0]):
-                for j in range(self.level.map_size[1]):
-                    coords = [self.draw_offset[0]+i*self.tilesize, self.draw_offset[1]+j*self.tilesize]
-                    triggerval = self.level.triggerlayer[self.level.map_size[0]*j+i]
-                    ind = trigger_list.index(triggerval)
-                    if ind == 1:
-                        pygame.draw.rect(screen, (255,0,0), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 2:
-                        pygame.draw.rect(screen, (0,255,0), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 3:
-                        pygame.draw.rect(screen, (0,0,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-                    elif ind == 4:
-                        pygame.draw.rect(screen, (0,255,255), pygame.Rect((coords[0],coords[1]),(self.tilesize,self.tilesize)))
-         """
 
