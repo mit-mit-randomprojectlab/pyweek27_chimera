@@ -23,7 +23,7 @@ def main(mainpath):
     
     # start up director
     framerate = 30
-    screen_res = (640,480)
+    screen_res = (800,600)
     window_title = "Pyweek27: Team Chimera"
     dir = GameDirector(window_title, screen_res, framerate)
     

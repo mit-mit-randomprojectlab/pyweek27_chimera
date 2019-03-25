@@ -16,6 +16,7 @@ from math import *
 
 import resources
 import tilemap
+import players
 
 class Camera(object):
 	def __init__(self,parent,screen_size,stickyness=0.33):
@@ -63,17 +64,17 @@ class MainGame(GameScene):
         # Initialise objects
         self.camera = Camera(self,self.window_size)
         self.tiledlayers = tilemap.TiledLayers(self)
+        self.player = players.Inmate(self)
         
         # load level data
         self.tiledlayers.init_level(level_id)
     
     def on_update(self):
         
-        # Update player motions
-        
-        # Update camera
-        #self.camera.UpdateCamera([int(self.submarine.body.position[0]),-int(self.submarine.body.position[1])])
-        self.camera.UpdateCamera([0,0])
+        # Update player motion and camera
+        self.player.UpdateMotion()
+        self.camera.UpdateCamera([int(self.player.x),int(self.player.y)])
+        #self.camera.UpdateCamera([0,0])
         
         # framerate tracking
         self.frsamples += 1
@@ -86,10 +87,13 @@ class MainGame(GameScene):
         for event in events:
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 self.director.change_scene(None, [])
+            elif event.type == KEYDOWN or event.type == KEYUP:
+            	self.player.control.ProcessKeyEvent(event)
     			    
     def draw(self, screen):
         screen.fill((0,0,0))
         self.tiledlayers.RenderBGLayer(screen)
+        self.player.Draw(screen)
         self.tiledlayers.RenderFGLayer(screen)
     
     def on_draw(self, screen):

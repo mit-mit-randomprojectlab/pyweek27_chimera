@@ -26,7 +26,15 @@ def init(mainpath,screen_res):
 			tiles_coords.append((i*32, j*32, 32, 32))
 	
 	# Load sprites
+	global charsprites
+	global charsprites_coords
 	
+	charsprites = pygame.image.load(os.path.join(mainpath,'data','gfx','chars_2x.png')).convert()
+	charsprites.set_colorkey((255,0,255))
+	charsprites_coords = []
+	for j in range(7):
+		for i in range(12):
+			charsprites_coords.append((i*32, j*48, 32, 48))
 	
 	# Load level data
 	global levels
@@ -45,5 +53,5 @@ def init(mainpath,screen_res):
 	controlmap['L'] = K_LEFT
 	controlmap['D'] = K_DOWN
 	controlmap['U'] = K_UP
-	controlmap['throw'] = K_SPACE
+	controlmap['action'] = K_SPACE
 
