@@ -107,8 +107,8 @@ class Inmate(object):
         	self.y = self.parent.tiledlayers.map_size[1]*tsize-(tsize/2)
         
         # Handle all collisions off solid objects
-        playersize_x = 28
-        playersize_y = 28
+        playersize_x = 24
+        playersize_y = 24
         (self.x,self.y) = self.parent.tiledlayers.HandleObjectWallCollision((self.x,self.y),(playersize_x,playersize_y),(vx,vy))
         
         # Check if need to inform tilemap object layer of updates
@@ -121,5 +121,7 @@ class Inmate(object):
         tilecoords = resources.charsprites_coords[0]
         imw = 32
         imh = 48
-        screen.blit(resources.charsprites, (self.x-(imw/2)-self.parent.camera.x+self.parent.camera.w_view/2,self.y-(imh/2)-self.parent.camera.y+self.parent.camera.h_view/2-44), area=tilecoords)
-        
+        boxw = 24
+        boxh = 24
+        pygame.draw.rect(screen, (255,0,0), pygame.Rect((self.x-(boxw/2)-self.parent.camera.x+self.parent.camera.w_view/2,self.y-(boxh/2)-self.parent.camera.y+self.parent.camera.h_view/2),(boxw,boxh)))
+        screen.blit(resources.charsprites, (self.x-(imw/2)-self.parent.camera.x+self.parent.camera.w_view/2,self.y-(imh/2)-self.parent.camera.y+self.parent.camera.h_view/2-20), area=tilecoords)

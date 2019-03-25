@@ -43,8 +43,8 @@ class TiledLayers(object):
         	self.parent.camera.ylim = self.map_size[1]*self.tilesize
         
         # Initialise player data and load into object layer
-        playerx = self.tilesize*(self.player_start_tile%self.map_size[0])
-        playery = self.tilesize*int(self.player_start_tile/self.map_size[0])
+        playerx = self.tilesize*(self.player_start_tile%self.map_size[0])+self.tilesize/2
+        playery = self.tilesize*int(self.player_start_tile/self.map_size[0])+self.tilesize/2
         self.parent.player.x = playerx
         self.parent.player.y = playery
         self.InsertObj(self.player_start_tile,0)
