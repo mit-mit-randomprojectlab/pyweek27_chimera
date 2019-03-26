@@ -22,7 +22,7 @@ class TiledLayers(object):
         self.level_id = level_id
         self.map_size = resources.levels[level_id].data['tilemap']['size'][:]
         self.tilesize = 32
-        self.player_start_tile = 33 # for now until in level data
+        self.player_start_tiles = [33,35,37] # for now until in level data
         self.finish_tile = 32*32 # for now until in level data
         self.tilelayer_bg = resources.levels[level_id].data['tilemap']['layer_b'][:]
         self.tilelayer_mg = resources.levels[level_id].data['tilemap']['layer_m'][:]
@@ -43,11 +43,14 @@ class TiledLayers(object):
         	self.parent.camera.ylim = self.map_size[1]*self.tilesize
         
         # Initialise player data and load into object layer
-        playerx = self.tilesize*(self.player_start_tile%self.map_size[0])+self.tilesize/2
-        playery = self.tilesize*int(self.player_start_tile/self.map_size[0])+self.tilesize/2
-        self.parent.player.x = playerx
-        self.parent.player.y = playery
-        self.InsertObj(self.player_start_tile,0)
+        for i in range(len(self.player_start_tiles)):
+        	tile = self.player_start_tiles[i]
+        	playerx = self.tilesize*(tile%self.map_size[0])+self.tilesize/2
+        	playery = self.tilesize*int(tile/self.map_size[0])+self.tilesize/2
+        	self.parent.inmates[i].x = playerx
+        	self.parent.inmates[i].y = playery
+        	self.parent.inmates[i].id = i
+        	self.InsertObj(tile,i)
         
         # render tiled layers
         self.bglayer = pygame.Surface((self.tilesize*self.map_size[0],self.tilesize*self.map_size[1]))
@@ -88,7 +91,7 @@ class TiledLayers(object):
     
     def InsertObj(self,tileind,objid):
         self.objectlayer[tileind].append(objid)
-        if objid == 0 and tileind == self.finish_tile:
+        if objid == 0 and tileind == self.finish_tile: # TODO: fix up for recording all inmates get to end?
             self.exiting = True
     
     def RemoveObj(self,tileind,objid):
@@ -108,18 +111,6 @@ class TiledLayers(object):
         sx = objsize[0]
         sy = objsize[1]
         ts = self.tilesize
-        
-        """
-        tileocc_ul = int(self.map_size[0]*((y-(sy/2))/ts)+((x-(sx/2))/ts))
-        tileocc_ur = int(self.map_size[0]*((y-(sy/2))/ts)+((x+(sx/2))/ts))
-        tileocc_ll = int(self.map_size[0]*((y+(sy/2))/ts)+((x-(sx/2))/ts))
-        tileocc_lr = int(self.map_size[0]*((y+(sy/2))/ts)+((x+(sx/2))/ts))
-        
-        tileocc_u = int(self.map_size[0]*((y-(sy/2))/ts)+(x/ts))
-        tileocc_d = int(self.map_size[0]*((y+(sy/2))/ts)+(x/ts))
-        tileocc_l = int(self.map_size[0]*(y/ts)+((x-(sx/2))/ts))
-        tileocc_r = int(self.map_size[0]*(y/ts)+((x+(sx/2))/ts))
-        """
         
         tileocc_ul = self.map_size[0]*int((y-int(sy/2))/ts)+int((x-int(sx/2))/ts)
         tileocc_ur = self.map_size[0]*int((y-int(sy/2))/ts)+int((x+int(sx/2))/ts)

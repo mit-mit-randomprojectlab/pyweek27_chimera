@@ -14,44 +14,60 @@ from math import *
 
 import resources
 
-class KeyControl(object):
-	def __init__(self,controlmap):
+class MasterControl(object):
+	def __init__(self,parent,controlmap):
+		self.parent = parent
 		self.CM = controlmap
+		self.current_p = 0
+	
+	def ProcessKeyEvent(self,event):
+		current_control = self.parent.inmates[self.current_p].control
+		if event.type == KEYDOWN:
+			if event.key == self.CM["L"]:
+				current_control.l = 1
+			elif event.key == self.CM["R"]:
+				current_control.r = 1
+			elif event.key == self.CM["U"]:
+				current_control.u = 1
+			elif event.key == self.CM["D"]:
+				current_control.d = 1
+			elif event.key == self.CM["action"]:
+				current_control.action = 1
+			elif event.key == self.CM["switch"]:
+				current_control.Stop() # set control variable for current player to zero before switching
+				self.current_p += 1
+				if self.current_p == len(self.parent.inmates): # TODO: might need to fix up for in-active inmates
+					self.current_p = 0
+		elif event.type == KEYUP:
+			if event.key == self.CM["L"]:
+				current_control.l = 0
+			elif event.key == self.CM["R"]:
+				current_control.r = 0
+			elif event.key == self.CM["U"]:
+				current_control.u = 0
+			elif event.key == self.CM["D"]:
+				current_control.d = 0
+			elif event.key == self.CM["action"]:
+				current_control.action = 0
+
+class KeyControl(object):
+	def __init__(self):
 		self.l = 0
 		self.r = 0
 		self.u = 0
 		self.d = 0
 		self.action = 0
-	
-	def ProcessKeyEvent(self,event):
-		if event.type == KEYDOWN:
-			if event.key == self.CM["L"]:
-				self.l = 1
-			elif event.key == self.CM["R"]:
-				self.r = 1
-			elif event.key == self.CM["U"]:
-				self.u = 1
-			elif event.key == self.CM["D"]:
-				self.d = 1
-			elif event.key == self.CM["action"]:
-				self.action = 1
-		elif event.type == KEYUP:
-			if event.key == self.CM["L"]:
-				self.l = 0
-			elif event.key == self.CM["R"]:
-				self.r = 0
-			elif event.key == self.CM["U"]:
-				self.u = 0
-			elif event.key == self.CM["D"]:
-				self.d = 0
-			elif event.key == self.CM["action"]:
-				self.action = 0
-
-
+	def Stop(self):
+		self.l = 0
+		self.r = 0
+		self.u = 0
+		self.d = 0
+		self.action = 0
 
 class Inmate(object):
 	def __init__(self,parent):
 		self.parent = parent
+		self.id = None
 		self.alive = True
 		self.x = -1
 		self.y = -1
@@ -59,7 +75,7 @@ class Inmate(object):
 		self.moving = False
 		self.speed = 4
 		self.speed_d = 3
-		self.control = KeyControl(resources.controlmap)
+		self.control = KeyControl()
 	
 	def UpdateMotion(self):
 	
@@ -114,7 +130,7 @@ class Inmate(object):
 		# Check if need to inform tilemap object layer of updates
 		final_tile = self.parent.tiledlayers.map_size[0]*int(self.y/tsize)+int(self.x/tsize)
 		if not init_tile == final_tile:
-			self.parent.tiledlayers.UpdateObj(init_tile,final_tile,0)
+			self.parent.tiledlayers.UpdateObj(init_tile,final_tile,self.id)
 	
 	def Draw(self,screen):
 		ts = self.parent.tiledlayers.tilesize

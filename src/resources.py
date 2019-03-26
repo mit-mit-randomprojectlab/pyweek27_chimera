@@ -53,5 +53,6 @@ def init(mainpath,screen_res):
 	controlmap['L'] = K_LEFT
 	controlmap['D'] = K_DOWN
 	controlmap['U'] = K_UP
+	controlmap['switch'] = K_TAB
 	controlmap['action'] = K_SPACE
 

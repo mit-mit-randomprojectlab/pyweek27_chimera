@@ -45,56 +45,60 @@ class Camera(object):
 			self.y = self.ylim-self.h_view/2
 
 class MainGame(GameScene):
-    def __init__(self, director, window_size):
-        super(MainGame, self).__init__(director)
-        self.window_size = window_size
-        
-        # frame rate recording
-        self.avgframerate = -1
-        self.frsamples = 0
-    
-    def on_switchto(self, switchtoargs):
-        
-        # Check if un-pause or resetting level
-        lvlreset = switchtoargs[0]
-        if not lvlreset:
-            return
-        level_id = switchtoargs[1]
-        
-        # Initialise objects
-        self.camera = Camera(self,self.window_size)
-        self.tiledlayers = tilemap.TiledLayers(self)
-        self.player = players.Inmate(self)
-        
-        # load level data
-        self.tiledlayers.init_level(level_id)
-    
-    def on_update(self):
-        
-        # Update player motion and camera
-        self.player.UpdateMotion()
-        self.camera.UpdateCamera([int(self.player.x),int(self.player.y)])
-        #self.camera.UpdateCamera([0,0])
-        
-        # framerate tracking
-        self.frsamples += 1
-        if self.frsamples == 1:
-            self.avgframerate = self.director.framerate
-        else:
-            self.avgframerate = self.avgframerate + (self.director.framerate - self.avgframerate)/(self.frsamples)
-        
-    def on_event(self, events):
-        for event in events:
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
-                self.director.change_scene(None, [])
-            elif event.type == KEYDOWN or event.type == KEYUP:
-            	self.player.control.ProcessKeyEvent(event)
-    			    
-    def draw(self, screen):
-        screen.fill((0,0,0))
-        self.tiledlayers.RenderBGLayer(screen)
-        self.player.Draw(screen)
-        self.tiledlayers.RenderFGLayer(screen)
-    
-    def on_draw(self, screen):
-        self.draw(screen)
+	def __init__(self, director, window_size):
+		super(MainGame, self).__init__(director)
+		self.window_size = window_size
+		
+		# frame rate recording
+		self.avgframerate = -1
+		self.frsamples = 0
+	
+	def on_switchto(self, switchtoargs):
+	
+		# Check if un-pause or resetting level
+		lvlreset = switchtoargs[0]
+		if not lvlreset:
+			return
+		level_id = switchtoargs[1]
+		
+		# Initialise objects
+		self.camera = Camera(self,self.window_size)
+		self.tiledlayers = tilemap.TiledLayers(self)
+		self.control = players.MasterControl(self,resources.controlmap)
+		self.inmates = []
+		for i in range(3):
+			self.inmates.append(players.Inmate(self))
+		
+		# load level data
+		self.tiledlayers.init_level(level_id)
+	
+	def on_update(self):
+	
+		# Update player motion and camera
+		for inmate in self.inmates:
+			inmate.UpdateMotion()
+		self.camera.UpdateCamera([int(self.inmates[self.control.current_p].x),int(self.inmates[self.control.current_p].y)])
+		
+		# framerate tracking
+		self.frsamples += 1
+		if self.frsamples == 1:
+			self.avgframerate = self.director.framerate
+		else:
+			self.avgframerate = self.avgframerate + (self.director.framerate - self.avgframerate)/(self.frsamples)
+		
+	def on_event(self, events):
+		for event in events:
+			if event.type == KEYDOWN and event.key == K_ESCAPE:
+				self.director.change_scene(None, [])
+			elif event.type == KEYDOWN or event.type == KEYUP:
+				self.control.ProcessKeyEvent(event)
+	
+	def draw(self, screen):
+		screen.fill((0,0,0))
+		self.tiledlayers.RenderBGLayer(screen)
+		for inmate in self.inmates:
+			inmate.Draw(screen)
+		self.tiledlayers.RenderFGLayer(screen)
+	
+	def on_draw(self, screen):
+		self.draw(screen)
