@@ -38,6 +38,8 @@ class MasterControl(object):
 				self.current_p += 1
 				if self.current_p == len(self.parent.inmates): # TODO: might need to fix up for in-active inmates
 					self.current_p = 0
+				current_inmate = self.parent.inmates[self.current_p]
+				self.parent.camera.SetWaypoint([current_inmate.x,current_inmate.y])
 		elif event.type == KEYUP:
 			if event.key == self.CM["L"]:
 				current_control.l = 0

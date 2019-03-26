@@ -26,7 +26,32 @@ class Camera(object):
 		self.w_view = screen_size[0]
 		self.h_view = screen_size[1]
 		self.stickyness = stickyness
+		
+		self.waypoint1 = [0,0]
+		self.waypoint2 = [0,0]
+		self.waypoint_to = -1
+		self.wp_t = 15.0
+	
+	def SetWaypoint(self,waypoint):
+		self.waypoint1 = [self.x,self.y]
+		self.x = waypoint[0]
+		self.y = waypoint[1]
+		self.UpdateCameraWalls()
+		self.waypoint2 = [self.x,self.y]
+		self.waypoint_to = self.wp_t
+		self.x = self.waypoint1[0]
+		self.y = self.waypoint1[1]
+	
 	def UpdateCamera(self,focus):
+		if self.waypoint_to >= 0:
+			self.x = self.waypoint2[0] + (self.waypoint_to/self.wp_t)*(self.waypoint1[0]-self.waypoint2[0])
+			self.y = self.waypoint2[1] + (self.waypoint_to/self.wp_t)*(self.waypoint1[1]-self.waypoint2[1])
+			self.waypoint_to -= 1
+		else:
+			self.UpdateCameraSticky(focus)
+			self.UpdateCameraWalls()
+	
+	def UpdateCameraSticky(self,focus):
 		if (focus[0] - self.x) > self.stickyness*self.w_view/2:
 			self.x = focus[0] - self.stickyness*self.w_view/2
 		elif (focus[0] - self.x) < -self.stickyness*self.w_view/2:
@@ -35,6 +60,8 @@ class Camera(object):
 			self.y = focus[1] - self.stickyness*self.h_view/2
 		elif (focus[1] - self.y) < -self.stickyness*self.h_view/2:
 			self.y = focus[1] + self.stickyness*self.h_view/2
+	
+	def UpdateCameraWalls(self):
 		if self.x < self.w_view/2:
 			self.x = self.w_view/2
 		elif self.x > (self.xlim-self.w_view/2):
@@ -65,8 +92,9 @@ class MainGame(GameScene):
 		self.camera = Camera(self,self.window_size)
 		self.tiledlayers = tilemap.TiledLayers(self)
 		self.control = players.MasterControl(self,resources.controlmap)
+		n_inmates = len([i for i in resources.levels[level_id].data['tilemap']['layerocc'] if i < 0])-1
 		self.inmates = []
-		for i in range(3):
+		for i in range(n_inmates):
 			self.inmates.append(players.Inmate(self))
 		
 		# load level data

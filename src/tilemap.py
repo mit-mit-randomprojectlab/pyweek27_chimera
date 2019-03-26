@@ -22,8 +22,6 @@ class TiledLayers(object):
         self.level_id = level_id
         self.map_size = resources.levels[level_id].data['tilemap']['size'][:]
         self.tilesize = 32
-        self.player_start_tiles = [33,35,37] # for now until in level data
-        self.finish_tile = 32*32 # for now until in level data
         self.tilelayer_bg = resources.levels[level_id].data['tilemap']['layer_b'][:]
         self.tilelayer_mg = resources.levels[level_id].data['tilemap']['layer_m'][:]
         self.tilelayer_fg = resources.levels[level_id].data['tilemap']['layer_f'][:]
@@ -31,6 +29,7 @@ class TiledLayers(object):
         
         self.objectlayer = [[] for i in range(self.map_size[0]*self.map_size[1])]
         self.exiting = False
+        self.players_safe = []
         
         # send initial data to camera
         if self.map_size[0] <= 25:
@@ -42,15 +41,32 @@ class TiledLayers(object):
         else:
         	self.parent.camera.ylim = self.map_size[1]*self.tilesize
         
+        # set start and end tiles from occupancy map data
+        self.player_start_tiles = []
+        self.player_ids = []
+        for i in range(1,7):
+        	try:
+        		tile = self.occlayer.index(-i)
+        		self.player_ids.append(-i)
+        		self.player_start_tiles.append(tile)
+        	except:
+        		pass
+        self.finish_tiles = [i for i, x in enumerate(self.occlayer) if x == -7]
+        
+        # fix up occlayer to have zeros, now player start/end data extracted
+        inds = [i for i, x in enumerate(self.occlayer) if x < 0]
+        for i in inds:
+        	self.occlayer[i] = 0
+        
         # Initialise player data and load into object layer
-        for i in range(len(self.player_start_tiles)):
+        for i in range(len(self.player_ids)):
         	tile = self.player_start_tiles[i]
-        	playerx = self.tilesize*(tile%self.map_size[0])+self.tilesize/2
-        	playery = self.tilesize*int(tile/self.map_size[0])+self.tilesize/2
+        	playerx = self.tilesize*(tile%self.map_size[0])+int(self.tilesize/2)
+        	playery = self.tilesize*int(tile/self.map_size[0])+int(self.tilesize/2)
         	self.parent.inmates[i].x = playerx
         	self.parent.inmates[i].y = playery
-        	self.parent.inmates[i].id = i
-        	self.InsertObj(tile,i)
+        	self.parent.inmates[i].id = self.player_ids[i]
+        	self.InsertObj(tile,self.player_ids[i])
         
         # render tiled layers
         self.bglayer = pygame.Surface((self.tilesize*self.map_size[0],self.tilesize*self.map_size[1]))
@@ -91,12 +107,14 @@ class TiledLayers(object):
     
     def InsertObj(self,tileind,objid):
         self.objectlayer[tileind].append(objid)
-        if objid == 0 and tileind == self.finish_tile: # TODO: fix up for recording all inmates get to end?
-            self.exiting = True
+        if objid < 0 and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
+            self.players_safe.append(objid)
     
     def RemoveObj(self,tileind,objid):
         if objid in self.objectlayer[tileind]:
             self.objectlayer[tileind].pop(self.objectlayer[tileind].index(objid))
+            if objid < 0 and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
+            	self.players_safe.remove(objid)
     
     def UpdateObj(self,tileind_old,tileind_new,objid):
         self.RemoveObj(tileind_old,objid)
