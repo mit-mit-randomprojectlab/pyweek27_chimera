@@ -18,7 +18,7 @@ class LevelData(object):
 			self.data['tilemap']['size'] = size[:]
 			self.data['tilemap']['ts'] = 16
 			self.data['tilemap']['layerocc'] = [0]*size[0]*size[1]
-			self.data['tilemap']['layer_b'] = [-1]*size[0]*size[1]
+			self.data['tilemap']['layer_b'] = [26]*size[0]*size[1]
 			self.data['tilemap']['layer_m'] = [-1]*size[0]*size[1]
 			self.data['tilemap']['layer_f'] = [-1]*size[0]*size[1]
 			
