@@ -105,10 +105,18 @@ class TiledLayers(object):
     def RenderFGLayer(self, screen):
         screen.blit(self.fglayer, (0,0), area=(self.parent.camera.x-self.parent.camera.w_view/2, self.parent.camera.y-self.parent.camera.h_view/2, self.parent.camera.w_view, self.parent.camera.h_view))
     
+    def RenderGoalTiles(self, screen):
+        for tile in self.finish_tiles:
+            x = self.tilesize*(tile%self.map_size[0])+4
+            y = self.tilesize*int(tile/self.map_size[0])+4
+            pygame.draw.rect(screen, (0,255,0), pygame.Rect((x-self.parent.camera.x+int(self.parent.camera.w_view/2),y-self.parent.camera.y+int(self.parent.camera.h_view/2)),(24,24)))
+    
     def InsertObj(self,tileind,objid):
         self.objectlayer[tileind].append(objid)
-        if objid < 0 and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
+        if objid < 0 and tileind in self.finish_tiles:
             self.players_safe.append(objid)
+            if len(self.players_safe) == len(self.player_ids):
+            	self.exiting = True
     
     def RemoveObj(self,tileind,objid):
         if objid in self.objectlayer[tileind]:

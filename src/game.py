@@ -18,6 +18,47 @@ import resources
 import tilemap
 import players
 
+class FadeInOut(object):
+	def __init__(self,ticks):
+		self.ticks = ticks
+		self.ticks_elapsed = 0
+		self.direction = 'none'
+		self.alpha = 255
+		self.finished_in = False
+		self.finished_out = False
+		self.musicfade = False
+	
+	def Update(self):
+		if self.direction == 'in' and not self.finished_in:
+			self.ticks_elapsed += 1
+			if self.ticks_elapsed > self.ticks:
+				self.finished_in = True
+			else:
+				#self.alpha = 255*(1.0-(self.ticks_elapsed/float(self.ticks)))
+				self.alpha = 255*(1.0-((5*int(self.ticks_elapsed/5))/float(self.ticks)))
+		elif self.direction == 'out' and not self.finished_out:
+			self.ticks_elapsed += 1
+			if self.ticks_elapsed > self.ticks:
+				self.finished_out = True
+			else:
+				#self.alpha = 255*(self.ticks_elapsed/float(self.ticks))
+				self.alpha = 255*((5*int(self.ticks_elapsed/5))/float(self.ticks))
+				if self.musicfade:
+					pygame.mixer.music.set_volume(0.5*(1.0 - (self.ticks_elapsed/float(self.ticks))))
+	
+	def FadeIn(self):
+		self.direction = 'in'
+		self.ticks_elapsed = 0
+		self.finished_in = False
+		self.finished_out = False
+	
+	def FadeOut(self,musicfade=False):
+		self.direction = 'out'
+		self.ticks_elapsed = 0
+		self.finished_out = False
+		self.finished_in = False
+		self.musicfade = musicfade
+
 class Camera(object):
 	def __init__(self,parent,screen_size,stickyness=0.33):
 		self.parent = parent
@@ -76,6 +117,14 @@ class MainGame(GameScene):
 		super(MainGame, self).__init__(director)
 		self.window_size = window_size
 		
+		# fade in/out
+		self.fade = FadeInOut(30)
+		
+		# Background
+		self.background = pygame.Surface(window_size)
+		self.background.fill((0,0,0))
+		self.background.convert()
+		
 		# frame rate recording
 		self.avgframerate = -1
 		self.frsamples = 0
@@ -88,17 +137,24 @@ class MainGame(GameScene):
 			return
 		level_id = switchtoargs[1]
 		
+		self.paused = False
+		self.exiting = False
+		
 		# Initialise objects
 		self.camera = Camera(self,self.window_size)
 		self.tiledlayers = tilemap.TiledLayers(self)
 		self.control = players.MasterControl(self,resources.controlmap)
-		n_inmates = len([i for i in resources.levels[level_id].data['tilemap']['layerocc'] if i < 0])-1
+		n_inmates = len([i for i, x in enumerate(resources.levels[level_id].data['tilemap']['layerocc']) if x < 0 and x > -7])
 		self.inmates = []
 		for i in range(n_inmates):
 			self.inmates.append(players.Inmate(self))
 		
 		# load level data
 		self.tiledlayers.init_level(level_id)
+		
+		# Fade in game
+		self.background.fill((0,0,0))
+		self.fade.FadeIn()
 	
 	def on_update(self):
 	
@@ -114,6 +170,21 @@ class MainGame(GameScene):
 		else:
 			self.avgframerate = self.avgframerate + (self.director.framerate - self.avgframerate)/(self.frsamples)
 		
+		# check for ending level
+		if not self.exiting and self.tiledlayers.exiting:
+			self.exiting = True
+			self.fade.FadeOut()
+		
+		# Control fade in/out, look for end game cues
+		self.fade.Update()
+		if self.fade.finished_out:
+			if self.tiledlayers.exiting: # finished level
+				ind_next = resources.level_list.index(self.tiledlayers.level_id)+1
+				if ind_next == len(resources.level_list):
+					ind_next = 0
+				next_level = resources.level_list[ind_next]
+				self.director.change_scene('maingame', [True, next_level])
+		
 	def on_event(self, events):
 		for event in events:
 			if event.type == KEYDOWN and event.key == K_ESCAPE:
@@ -127,6 +198,13 @@ class MainGame(GameScene):
 		for inmate in self.inmates:
 			inmate.Draw(screen)
 		self.tiledlayers.RenderFGLayer(screen)
+		if resources.debug_graphics:
+			self.tiledlayers.RenderGoalTiles(screen)
 	
 	def on_draw(self, screen):
 		self.draw(screen)
+		if self.paused:
+			self.background.set_alpha(128)
+		else:
+			self.background.set_alpha(self.fade.alpha)
+		screen.blit(self.background, (0, 0))

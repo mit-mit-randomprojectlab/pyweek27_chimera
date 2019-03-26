@@ -22,6 +22,9 @@ class MasterControl(object):
 	
 	def ProcessKeyEvent(self,event):
 		current_control = self.parent.inmates[self.current_p].control
+		if self.parent.tiledlayers.exiting:
+			current_control.Stop()
+			return
 		if event.type == KEYDOWN:
 			if event.key == self.CM["L"]:
 				current_control.l = 1
