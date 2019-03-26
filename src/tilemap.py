@@ -109,6 +109,7 @@ class TiledLayers(object):
         sy = objsize[1]
         ts = self.tilesize
         
+        """
         tileocc_ul = int(self.map_size[0]*((y-(sy/2))/ts)+((x-(sx/2))/ts))
         tileocc_ur = int(self.map_size[0]*((y-(sy/2))/ts)+((x+(sx/2))/ts))
         tileocc_ll = int(self.map_size[0]*((y+(sy/2))/ts)+((x-(sx/2))/ts))
@@ -118,22 +119,33 @@ class TiledLayers(object):
         tileocc_d = int(self.map_size[0]*((y+(sy/2))/ts)+(x/ts))
         tileocc_l = int(self.map_size[0]*(y/ts)+((x-(sx/2))/ts))
         tileocc_r = int(self.map_size[0]*(y/ts)+((x+(sx/2))/ts))
+        """
+        
+        tileocc_ul = self.map_size[0]*int((y-int(sy/2))/ts)+int((x-int(sx/2))/ts)
+        tileocc_ur = self.map_size[0]*int((y-int(sy/2))/ts)+int((x+int(sx/2))/ts)
+        tileocc_ll = self.map_size[0]*int((y+int(sy/2))/ts)+int((x-int(sx/2))/ts)
+        tileocc_lr = self.map_size[0]*int((y+int(sy/2))/ts)+int((x+int(sx/2))/ts)
+        
+        tileocc_u = self.map_size[0]*int((y-int(sy/2))/ts)+int(x/ts)
+        tileocc_d = self.map_size[0]*int((y+int(sy/2))/ts)+int(x/ts)
+        tileocc_l = self.map_size[0]*int(y/ts)+int((x-(sx/2))/ts)
+        tileocc_r = self.map_size[0]*int(y/ts)+int((x+(sx/2))/ts)
         
         if vx > 0 and vy == 0: # handle lateral/longitudinal collisions
             if self.occlayer[tileocc_ur] or self.occlayer[tileocc_lr] or self.occlayer[tileocc_r]:
-                x = ts*(tileocc_ur % self.map_size[0]) - 1 - sx/2
+                x = ts*(tileocc_ur % self.map_size[0]) - 1 - int(sx/2)
         elif vx < 0 and vy == 0:
             if self.occlayer[tileocc_ul] or self.occlayer[tileocc_ll] or self.occlayer[tileocc_l]:
-                x = ts*(tileocc_ul % self.map_size[0]) + 1 + sx/2 + ts
+                x = ts*(tileocc_ul % self.map_size[0]) + 1 + int(sx/2) + ts
         elif vx == 0 and vy > 0:
             if self.occlayer[tileocc_lr] or self.occlayer[tileocc_ll] or self.occlayer[tileocc_d]:
-                y = ts*(tileocc_ll/self.map_size[0]) - 1 - sy/2
+                y = ts*int(tileocc_ll/self.map_size[0]) - 1 - int(sy/2)
         elif vx == 0 and vy < 0:
             if self.occlayer[tileocc_ul] or self.occlayer[tileocc_ur] or self.occlayer[tileocc_u]:
-                y = ts*(tileocc_ul/self.map_size[0]) + 1 + sy/2 + ts
+                y = ts*int(tileocc_ul/self.map_size[0]) + 1 + int(sy/2) + ts
         elif vx > 0 and vy < 0: # handle corner cases
-            xref = ts*(tileocc_ur % self.map_size[0]) - 1 - sx/2
-            yref = ts*(tileocc_ur/self.map_size[0]) + 1 + sy/2 + ts
+            xref = ts*(tileocc_ur % self.map_size[0]) - 1 - int(sx/2)
+            yref = ts*int(tileocc_ur/self.map_size[0]) + 1 + int(sy/2) + ts
             if self.occlayer[tileocc_ul] and self.occlayer[tileocc_lr]:
                 x = xref
                 y = yref
@@ -147,8 +159,8 @@ class TiledLayers(object):
                 else:
                     y = yref
         elif vx > 0 and vy > 0:
-            xref = ts*(tileocc_lr % self.map_size[0]) - 1 - sx/2
-            yref = ts*(tileocc_lr/self.map_size[0]) - 1 - sy/2
+            xref = ts*(tileocc_lr % self.map_size[0]) - 1 - int(sx/2)
+            yref = ts*int(tileocc_lr/self.map_size[0]) - 1 - int(sy/2)
             if self.occlayer[tileocc_ll] and self.occlayer[tileocc_ur]:
                 x = xref
                 y = yref
@@ -162,8 +174,8 @@ class TiledLayers(object):
                 else:
                     y = yref
         elif vx < 0 and vy > 0:
-            xref = ts*(tileocc_ll % self.map_size[0]) + 1 + sx/2 + ts
-            yref = ts*(tileocc_ll/self.map_size[0]) - 1 - sy/2
+            xref = ts*(tileocc_ll % self.map_size[0]) + 1 + int(sx/2) + ts
+            yref = ts*int(tileocc_ll/self.map_size[0]) - 1 - int(sy/2)
             if self.occlayer[tileocc_ul] and self.occlayer[tileocc_lr]:
                 x = xref
                 y = yref
@@ -177,8 +189,8 @@ class TiledLayers(object):
                 else:
                     y = yref
         elif vx < 0 and vy < 0:
-            xref = ts*(tileocc_ul % self.map_size[0]) + 1 + sx/2 + ts
-            yref = ts*(tileocc_ul/self.map_size[0]) + 1 + sy/2 + ts
+            xref = ts*(tileocc_ul % self.map_size[0]) + 1 + int(sx/2) + ts
+            yref = ts*int(tileocc_ul/self.map_size[0]) + 1 + int(sy/2) + ts
             if self.occlayer[tileocc_ur] and self.occlayer[tileocc_ll]:
                 x = xref
                 y = yref
