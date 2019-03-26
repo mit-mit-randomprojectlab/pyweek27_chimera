@@ -14,6 +14,9 @@ import level_data
 
 def init(mainpath,screen_res):
 	
+	global debug_graphics
+	debug_graphics = False
+	
 	# Load tileset image, set tile coords
 	global tiles
 	global tiles_coords

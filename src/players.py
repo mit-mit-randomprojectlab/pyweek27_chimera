@@ -73,10 +73,19 @@ class Inmate(object):
 		self.alive = True
 		self.x = -1
 		self.y = -1
-		self.heading = 0
-		self.moving = False
+		
 		self.speed = 4
 		self.speed_d = 3
+		
+		self.moving = False
+		self.anispeed1 = 15
+		self.anispeed2 = 5
+		self.gait = 0
+		self.gait_to = self.anispeed1
+		self.ani_to = -1
+		
+		self.item = None
+		
 		self.control = KeyControl()
 	
 	def UpdateMotion(self):
@@ -92,6 +101,7 @@ class Inmate(object):
 		vx = self.control.r-self.control.l
 		vy = self.control.d-self.control.u
 		
+		lastmoving = self.moving
 		if abs(vx) > 0 or abs(vy) > 0:
 			self.moving = True
 		else:
@@ -104,15 +114,25 @@ class Inmate(object):
 			self.x = self.x + self.speed*vx
 			self.y = self.y + self.speed*vy
 		
-		# Set heading info
-		if vx > 0:
-			self.heading = 2
-		elif vx < 0:
-			self.heading = 3
-		elif vy > 0:
-			self.heading = 1
-		elif vy < 0:
-			self.heading = 0
+		# Animation control
+		if not self.moving: # stationary animation
+			if lastmoving:
+				self.gait = 0
+				self.gait_to = self.anispeed1
+			else:
+				self.gait_to -= 1
+				if self.gait_to == 0:
+					self.gait_to = self.anispeed1
+					self.gait = (self.gait+1) % 2
+		else: # moving
+			if not lastmoving:
+				self.gait = 0
+				self.gait_to = self.anispeed2
+			else:
+				self.gait_to -= 1
+				if self.gait_to == 0:
+					self.gait_to = self.anispeed2
+					self.gait = (self.gait+1) % 4
 		
 		# Handle world boundaries
 		if self.x < (tsize/2):
@@ -136,10 +156,18 @@ class Inmate(object):
 	
 	def Draw(self,screen):
 		ts = self.parent.tiledlayers.tilesize
-		tilecoords = resources.charsprites_coords[0]
+		tile = (-self.id)*12 + self.gait
+		if self.moving:
+			tile += 4
+			if not self.item == None:
+				tile += 4
+		elif not self.item == None:
+			tile += 2
+		tilecoords = resources.charsprites_coords[tile]
 		imw = 32
 		imh = 48
 		boxw = 24
 		boxh = 24
-		pygame.draw.rect(screen, (255,0,0), pygame.Rect((self.x-(boxw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(boxh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(boxw,boxh)))
+		if resources.debug_graphics:
+			pygame.draw.rect(screen, (255,0,0), pygame.Rect((self.x-(boxw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(boxh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(boxw,boxh)))
 		screen.blit(resources.charsprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20), area=tilecoords)
