@@ -13,6 +13,69 @@ import random
 
 import resources
 
+# Passage: a class for both doors and breakable walls, which share similar behaviours
+class Passage(object):
+	def __init__(self,parent,type,tile,state='closed'):
+		self.parent = parent
+		self.type = type # door1, door2, ... , breakable
+		self.tile = tile
+		self.state = state
+	
+	def Open(self):
+		self.ChangeState('open')
+	
+	def Close(self):
+		self.ChangeState('closed')
+	
+	def ChangeState(self, newstate):
+		self.state = newstate
+		if newstate == 'open':
+			if 'door' in self.type:
+				newtile1 = 41
+				newtile2 = 31
+			else:
+				newtile1 = -1
+				newtile2 = -1
+			newocc = 0
+		else: # closed
+			if 'door' in self.type:
+				if len(self.type) == 4: # just 'door'
+					newtile1 = 40
+					newtile2 = 30
+				else:
+					num = int(self.type[4])
+					newtile1 = 60+num-1
+					newtile2 = 50+num-1
+			newocc = 0
+		self.parent.tiledlayers.UpdateTileLayer(self.tile, 1, newtile1)
+		self.parent.tiledlayers.UpdateTileLayer(self.tile, 2, newtile2)
+		self.parent.tiledlayers.occlayer[self.tile] = newocc
+
+class Button(object):
+	def __init__(self,parent,type,tile):
+		self.parent = parent
+		self.type = type
+		self.tile = tile
+		self.state = False
+	
+	def Update(self):
+		paststate = self.state
+		cell = self.parent.tiledlayers.objectlayer[self.tile]
+		if any([(i in cell) for i in [6,7,8,9,10,11,13]]): # players or guards
+			self.state = True
+		else:
+			self.state = False
+		if not paststate == self.state: # update tile image data
+			if type == 'yellow':
+				newtile = 8
+			if type == 'red':
+				newtile = 18
+			if type == 'blue':
+				newtile = 28
+			if self.state == True:
+				newtile += 1
+			self.parent.tiledlayers.UpdateTileLayer(self.tile, 1, newtile)
+
 class TiledLayers(object):
     def __init__(self,parent):
         self.parent = parent
@@ -26,6 +89,7 @@ class TiledLayers(object):
         self.tilelayer_mg = resources.levels[level_id].data['tilemap']['layer_m'][:]
         self.tilelayer_fg = resources.levels[level_id].data['tilemap']['layer_f'][:]
         self.occlayer = resources.levels[level_id].data['tilemap']['layerocc'][:]
+        self.spawnlayer = resources.levels[level_id].data['tilemap']['layerspawn'][:]
         
         self.objectlayer = [[] for i in range(self.map_size[0]*self.map_size[1])]
         self.exiting = False
@@ -41,13 +105,16 @@ class TiledLayers(object):
         else:
         	self.parent.camera.ylim = self.map_size[1]*self.tilesize
         
+        # Spawnlayer data:
+        # 0-5 = key, 6-11 = player, 13 = guard, 14 = sword, 15 = hammer, 16 = duck, 17 = cake
+        
         # set start and end tiles from occupancy map data
         self.player_start_tiles = []
         self.player_ids = []
-        for i in range(1,7):
+        for i in range(6):
         	try:
-        		tile = self.occlayer.index(-i)
-        		self.player_ids.append(-i)
+        		tile = self.spawnlayer.index(i+6) # 6-11 are players
+        		self.player_ids.append(i+6)
         		self.player_start_tiles.append(tile)
         	except:
         		pass
@@ -67,6 +134,33 @@ class TiledLayers(object):
         	self.parent.inmates[i].y = playery
         	self.parent.inmates[i].id = self.player_ids[i]
         	self.InsertObj(tile,self.player_ids[i])
+        
+        # Initialise passages (doors and breakable walls)
+        self.passages = []
+        passage_tiles = [22,40,41,60,61,62,63,64,65]
+        passage_names = ['break','door','dooropen','door1','door2','door3','door4','door5','door6']
+        for tile in range(len(self.spawnlayer)):
+        	if self.tilelayer_mg[tile] in passage_tiles:
+        		ind = passage_tiles.index(self.tilelayer_mg[tile])
+        		type = passage_names[ind]
+        		if type == 'dooropen':
+        			type = 'door'
+        			state = 'open'
+        		else:
+        			state = 'closed'
+        		print('new door: ',type,tile,state)
+        		self.passages.append(Passage(self.parent,type,tile,state=state))
+        
+        # Initialise buttons
+        self.buttons = []
+        button_tiles = [8,18,28]
+        button_names = ['yellow','red','blue']
+        for tile in range(len(self.spawnlayer)):
+        	if self.tilelayer_mg[tile] in button_tiles:
+        		ind = button_tiles.index(self.tilelayer_mg[tile])
+        		type = button_names[ind]
+        		print('new button: ',type,tile)
+        		self.buttons.append(Button(self.parent,type,tile))
         
         # render tiled layers
         self.bglayer = pygame.Surface((self.tilesize*self.map_size[0],self.tilesize*self.map_size[1]))
@@ -92,12 +186,25 @@ class TiledLayers(object):
                 if tilevalfg >= 0:
                     tilecoords = resources.tiles_coords[tilevalfg]
                     self.fglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
-        
-    def UpdateTileLayer(self, tile, tileval):
-        coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]
-        if tileval >= 0:
-            tilecoords = resources.tiles_coords[tileval]
-            self.bglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
+    
+    def UpdateTileMapEntities(self): # update routine called by main game loop
+    	for button in self.buttons:
+    		button.Update()
+    
+    def UpdateTileLayer(self, tile, layer, tileval): # layer: 1: mid, 2: fore
+    	coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]
+    	if layer == 2:
+    		self.fglayer.blit(resources.tiles, (coords[0],coords[1]), area=resources.tiles_coords[139]) # blit with transperancy
+    		if tileval >= 0:
+    			tilecoords = resources.tiles_coords[tileval]
+    			self.fglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
+    	if layer == 1:
+    		tilevalbg = self.tilelayer_bg[tile]
+    		tilecoordsbg = resources.tiles_coords[tilevalbg]
+    		self.bglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoordsbg) # re-blit background first
+    		if tileval >= 0:
+    			tilecoords = resources.tiles_coords[tileval]
+    			self.bglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
     
     def RenderBGLayer(self, screen):
         screen.blit(self.bglayer, (0,0), area=(self.parent.camera.x-self.parent.camera.w_view/2, self.parent.camera.y-self.parent.camera.h_view/2, self.parent.camera.w_view, self.parent.camera.h_view))
@@ -113,7 +220,7 @@ class TiledLayers(object):
     
     def InsertObj(self,tileind,objid):
         self.objectlayer[tileind].append(objid)
-        if objid < 0 and tileind in self.finish_tiles:
+        if objid in [6,7,8,9,10,11] and tileind in self.finish_tiles:
             self.players_safe.append(objid)
             if len(self.players_safe) == len(self.player_ids):
             	self.exiting = True
@@ -121,7 +228,7 @@ class TiledLayers(object):
     def RemoveObj(self,tileind,objid):
         if objid in self.objectlayer[tileind]:
             self.objectlayer[tileind].pop(self.objectlayer[tileind].index(objid))
-            if objid < 0 and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
+            if objid in [6,7,8,9,10,11] and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
             	self.players_safe.remove(objid)
     
     def UpdateObj(self,tileind_old,tileind_new,objid):

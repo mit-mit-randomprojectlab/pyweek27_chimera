@@ -144,7 +144,8 @@ class MainGame(GameScene):
 		self.camera = Camera(self,self.window_size)
 		self.tiledlayers = tilemap.TiledLayers(self)
 		self.control = players.MasterControl(self,resources.controlmap)
-		n_inmates = len([i for i, x in enumerate(resources.levels[level_id].data['tilemap']['layerocc']) if x < 0 and x > -7])
+		#n_inmates = len([i for i, x in enumerate(resources.levels[level_id].data['tilemap']['layerocc']) if x < 0 and x > -7])
+		n_inmates = len([i for i in resources.levels[level_id].data['tilemap']['layerspawn'] if i >= 6 and i <= 11])
 		self.inmates = []
 		for i in range(n_inmates):
 			self.inmates.append(players.Inmate(self))

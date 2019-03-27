@@ -159,7 +159,7 @@ class Inmate(object):
 	
 	def Draw(self,screen):
 		ts = self.parent.tiledlayers.tilesize
-		tile = (-self.id)*12 + self.gait
+		tile = (self.id-6)*12 + self.gait
 		if self.moving:
 			tile += 4
 			if not self.item == None:

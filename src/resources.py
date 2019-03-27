@@ -48,7 +48,7 @@ def init(mainpath,screen_res):
 		levels[level_name] = level_data.LevelData(path=os.path.join(mainpath,'data','level',f))
 	
 	global level_list
-	level_list = ['testbig001','test001']
+	level_list = ['testbig002','test001']
 	
 	# pre-sets and controls
 	global controlmap
