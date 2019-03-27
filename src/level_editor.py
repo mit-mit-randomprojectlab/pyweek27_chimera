@@ -31,12 +31,8 @@ item_list = [None, 'key', 'ducky']
 # Load in resources
 resources = {}
 def init_resources(mainpath):
-	resources['tiles'] = pygame.image.load(os.path.join(mainpath, 'data', 'gfx', 'tileset_1x.png')).convert()
-	resources['tiles'].set_colorkey((255, 0, 255))
-	resources['tiles_coords'] = []
-	for j in range(14):
-		for i in range(10):
-			resources['tiles_coords'].append((i * 16, j * 16, 16, 16))
+	load_spritesheet('tiles', mainpath, 'tileset_1x.png', (255, 0, 255), 10, 14)
+	load_spritesheet('items', mainpath, 'items_1x.png', (255, 0, 255), 6, 3)
 
 	# Text data for draw modes
 	font_draw = pygame.font.SysFont("arial", 12)
@@ -45,6 +41,17 @@ def init_resources(mainpath):
 	resources['text_mg'] = font_draw.render('Midground Tile Mode', True, (255, 255, 255))
 	resources['text_fg'] = font_draw.render('Foreground Tile Mode', True, (255, 255, 255))
 	resources['text_item'] = font_draw.render('Item Mode (q to quit back to tiles)', True, (255, 255, 255))
+
+def load_spritesheet(name, mainpath, filename, color, w, h):
+	resources[name] = pygame.image.load(os.path.join(mainpath, 'data', 'gfx', filename)).convert()
+	resources[name].set_colorkey(color)
+	resources[name + '_coords'] = []
+	for j in range(h):
+		for i in range(w):
+			resources[name + '_coords'].append((i * 16, j * 16, 16, 16))
+	resources[name + '_w'] = w
+	resources[name + '_h'] = h
+
 
 # Class for dialog to get map size for new map
 default_map_size = [32, 32]
@@ -88,7 +95,7 @@ def main(mainpath):
 	framerate = 30
 	screen_res = (1200, 700)
 
-	window_title = "Level Editor: n/l/s (new/load/save), o (occupancy layer), b (background), m (midground), f (foreground), g (toggle guide lines), a (auto - tiler), i (items)"
+	window_title = "Level Editor: n/l/s (new/load/save), o (occupancy layer), b (background), m (midground), f (foreground), g (toggle guide lines), a (auto - tiler), i (spawn)"
 	dir = GameDirector(window_title, screen_res, framerate)
 
 	# Load resources
@@ -123,21 +130,28 @@ class LevelEditor(GameScene):
 
 		self.level = None
 
-		self.npal_x = 10
-		self.npal_y = 14
-		self.palette = pygame.Surface((self.npal_x * self.tilesize, self.npal_y * self.tilesize))
-		self.palette.fill((0, 0, 0))
-		self.palette.convert()
-		for j in range(self.npal_y):
-			for i in range(self.npal_x):
-				self.palette.blit(resources['tiles'], (i * self.tilesize, j * self.tilesize), area=resources['tiles_coords'][i + self.npal_x * j])
+		self.palette = {}
+		self.setPalette('tiles')
+		self.setPalette('items')
+		self.npal_x = self.palette['tiles_w']
+		self.npal_y = self.palette['tiles_h']
 
-		self.layer_key = ['layerocc', 'layer_b', 'layer_m', 'layer_f']
+		self.layer_key = ['layerocc', 'layer_b', 'layer_m', 'layer_f', 'layerspawn']
 		self.draw_offset = (16, 32) # fix up
 		self.draw_offset_palette = (self.window_size[0] - self.tilesize - self.npal_x * self.tilesize, 2 * self.tilesize)
 		self.draw_offset_palette = (2 * 16  +  800, 2 * 16)
 		self.reset_userdata()
 		self.SetAutoTileRules()
+
+	def setPalette(self, name):
+		self.palette[name + '_w'] = resources[name + '_w']
+		self.palette[name + '_h'] = resources[name + '_h']
+		self.palette[name] = pygame.Surface((self.palette[name + '_w'] * self.tilesize, self.palette[name + '_h'] * self.tilesize))
+		self.palette[name].fill((0, 0, 0))
+		self.palette[name].convert()
+		for j in range(self.palette[name + '_h']):
+			for i in range(self.palette[name + '_w']):
+				self.palette[name].blit(resources[name], (i * self.tilesize, j * self.tilesize), area=resources[name + '_coords'][i + self.palette[name + '_w'] * j])
 
 	def reset_mainwindowsurf(self):
 		self.mainwindowsurf = pygame.Surface((self.level.data['tilemap']['size'][0] * self.tilesize, self.level.data['tilemap']['size'][1] * self.tilesize))
@@ -179,7 +193,7 @@ class LevelEditor(GameScene):
 			return
 		self.level.data['tilemap']['layerocc'][msx * j + i] = self.level.data['tilemap']['layerocc'][int(msx * j + i)]  +  1
 		if self.level.data['tilemap']['layerocc'][msx * j + i] > 2:
-			self.level.data['tilemap']['layerocc'][msx * j + i] = 0
+			self.level.data['tilemap']['layerocc'][msx * j + i] = -2
 
 	def SetOcc(self, x, y, value):
 		msx = self.level.data['tilemap']['size'][0]
@@ -433,7 +447,8 @@ class LevelEditor(GameScene):
 		if key == K_a: # toggle guides on/off
 			self.AutoUpdateTileLayers()
 		if key == K_i:
-			self.objectdrawtype = 'item'
+			self.tilemode = 4
+			self.draw_type = 0
 		if key == K_q:
 			self.objectdrawtype = 'none'
 
@@ -460,10 +475,16 @@ class LevelEditor(GameScene):
 					elif self.objectdrawtype == 'item':
 						pass # TODO: add item support
 
-		if (self.mouse_pos[0] > self.draw_offset_palette[0] and self.mouse_pos[1] < (self.draw_offset_palette[1] + self.npal_y * self.tilesize)):
+
+		palette = 'tiles'
+		if self.tilemode == 4:
+			palette = 'items'
+		pal_w = self.palette[palette + "_w"]
+		pal_h = self.palette[palette + "_h"]
+		if (self.mouse_pos[0] > self.draw_offset_palette[0] and self.mouse_pos[1] < (self.draw_offset_palette[1] + pal_h * self.tilesize)):
 			coords = (int((self.mouse_pos[0] - self.draw_offset_palette[0])/self.tilesize), int((self.mouse_pos[1] - self.draw_offset_palette[1])/self.tilesize))
-			if coords[0] >= 0 and coords[0] < self.npal_x and coords[1] >= 0 and coords[1] < self.npal_y:
-				self.draw_type = coords[0] + self.npal_x * coords[1]
+			if coords[0] >= 0 and coords[0] < pal_w and coords[1] >= 0 and coords[1] < pal_h:
+				self.draw_type = coords[0] + pal_w * coords[1]
 
 	def on_draw(self, screen):
 
@@ -477,10 +498,16 @@ class LevelEditor(GameScene):
 			pygame.Rect((self.draw_offset[0], self.draw_offset[1]), (800, 600)))
 
 		# Draw palette
-		screen.blit(self.palette, self.draw_offset_palette)
+		palette = 'tiles'
+		if self.tilemode == 4:
+			palette = 'items'
+		pal_w = self.palette[palette + "_w"]
+		pal_h = self.palette[palette + "_h"]
+
+		screen.blit(self.palette[palette], self.draw_offset_palette)
 		if self.draw_type >= 0:
 			pygame.draw.rect(screen, (255, 0, 0), \
-				pygame.Rect((self.draw_offset_palette[0] + self.tilesize * (self.draw_type%self.npal_x), self.draw_offset_palette[1] + self.tilesize * int(self.draw_type/self.npal_x)), (self.tilesize, self.tilesize)), 1)
+				pygame.Rect((self.draw_offset_palette[0] + self.tilesize * (self.draw_type%pal_w), self.draw_offset_palette[1] + self.tilesize * int(self.draw_type/pal_w)), (self.tilesize, self.tilesize)), 1)
 
 		if self.level == None:  # skip rest if no level loaded yet
 			return
@@ -499,23 +526,28 @@ class LevelEditor(GameScene):
 				for j in range(msy):
 					coords = [i * self.tilesize, j * self.tilesize]
 					occval = self.level.data['tilemap']['layerocc'][msx * j + i]
-					if occval == 0:
-						pygame.draw.rect(self.mainwindowsurf, (0, 0, 0), pygame.Rect((coords[0], coords[1]), (self.tilesize, self.tilesize)))
-					elif occval == 1:
-						pygame.draw.rect(self.mainwindowsurf, (255, 255, 255), pygame.Rect((coords[0], coords[1]), (self.tilesize, self.tilesize)))
-					elif occval == 2:
-						pygame.draw.rect(self.mainwindowsurf, (0, 0, 255), pygame.Rect((coords[0], coords[1]), (self.tilesize, self.tilesize)))
+					colors = {
+						-2: (255, 0, 0),
+						-1: (255, 255, 0),
+						0: (0, 0, 0),
+						1: (255, 255, 255),
+						2: (0, 0, 255)
+					}
+					pygame.draw.rect(self.mainwindowsurf, colors[occval], pygame.Rect((coords[0], coords[1]), (self.tilesize, self.tilesize)))
 
 		else: # draw tiles on or below current layer
-			for layer in range(1, 4):
+			for layer in range(1, 5):
 				for i in range(msx):
 					for j in range(msy):
 						if layer <= self.tilemode:
 							coords = [i * self.tilesize, j * self.tilesize]
 							tileval = self.level.data['tilemap'][self.layer_key[layer]][msx * j + i]
 							if tileval >= 0:
-								tilecoords = resources['tiles_coords'][tileval]
-								self.mainwindowsurf.blit(resources['tiles'], (coords[0], coords[1]), area=tilecoords)
+								sheet = 'tiles'
+								if layer == 4:
+									sheet = 'items'
+								area = resources[sheet+'_coords'][tileval]
+								self.mainwindowsurf.blit(resources[sheet], (coords[0], coords[1]), area=area)
 
 		# render window surf to main window
 		sx = self.mainwindowparams[0]
