@@ -17,6 +17,7 @@ from math import *
 import resources
 import tilemap
 import players
+import level_behaviours
 
 class FadeInOut(object):
 	def __init__(self,ticks):
@@ -144,18 +145,30 @@ class MainGame(GameScene):
 		self.camera = Camera(self,self.window_size)
 		self.tiledlayers = tilemap.TiledLayers(self)
 		self.control = players.MasterControl(self,resources.controlmap)
-		#n_inmates = len([i for i, x in enumerate(resources.levels[level_id].data['tilemap']['layerocc']) if x < 0 and x > -7])
 		n_inmates = len([i for i in resources.levels[level_id].data['tilemap']['layerspawn'] if i >= 6 and i <= 11])
 		self.inmates = []
 		for i in range(n_inmates):
 			self.inmates.append(players.Inmate(self))
+		self.behaviours = level_behaviours.Level_Behaviours(self)
 		
 		# load level data
 		self.tiledlayers.init_level(level_id)
 		
+		# example callback?
+		#self.tiledlayers.buttons[0].statechange_callback = self.DoorTest # test callback
+		
+		# Initialise level behaviours
+		self.behaviours.on_levelstart(level_id)
+		
 		# Fade in game
 		self.background.fill((0,0,0))
 		self.fade.FadeIn()
+	
+	def DoorTest(self):
+		if self.tiledlayers.buttons[0].state == True and self.tiledlayers.buttons[1].state == True:
+			self.tiledlayers.passages[3].Open()
+		else:
+			self.tiledlayers.passages[3].Close()
 	
 	def on_update(self):
 	
@@ -163,6 +176,15 @@ class MainGame(GameScene):
 		for inmate in self.inmates:
 			inmate.UpdateMotion()
 		self.camera.UpdateCamera([int(self.inmates[self.control.current_p].x),int(self.inmates[self.control.current_p].y)])
+		
+		# Update tilemap entities
+		self.tiledlayers.UpdateTileMapEntities()
+		
+		# Update level behaviours
+		self.behaviours.on_update()
+		
+		# testing functions
+		self.DoorTest()
 		
 		# framerate tracking
 		self.frsamples += 1
@@ -196,6 +218,8 @@ class MainGame(GameScene):
 	def draw(self, screen):
 		screen.fill((0,0,0))
 		self.tiledlayers.RenderBGLayer(screen)
+		for item in self.tiledlayers.items:
+			item.Draw(screen)
 		for inmate in self.inmates:
 			inmate.Draw(screen)
 		self.tiledlayers.RenderFGLayer(screen)

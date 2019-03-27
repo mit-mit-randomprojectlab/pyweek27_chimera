@@ -46,9 +46,10 @@ class Passage(object):
 					num = int(self.type[4])
 					newtile1 = 60+num-1
 					newtile2 = 50+num-1
-			newocc = 0
+			newocc = 1
+		t = self.tile-self.parent.tiledlayers.map_size[0]
 		self.parent.tiledlayers.UpdateTileLayer(self.tile, 1, newtile1)
-		self.parent.tiledlayers.UpdateTileLayer(self.tile, 2, newtile2)
+		self.parent.tiledlayers.UpdateTileLayer(self.tile-self.parent.tiledlayers.map_size[0], 2, newtile2)
 		self.parent.tiledlayers.occlayer[self.tile] = newocc
 
 class Button(object):
@@ -57,24 +58,71 @@ class Button(object):
 		self.type = type
 		self.tile = tile
 		self.state = False
+		self.statechange_callback = None
 	
 	def Update(self):
 		paststate = self.state
-		cell = self.parent.tiledlayers.objectlayer[self.tile]
-		if any([(i in cell) for i in [6,7,8,9,10,11,13]]): # players or guards
+		cellids = [d.id for d in self.parent.tiledlayers.objectlayer[self.tile]]
+		if any([(i in cellids) for i in [6,7,8,9,10,11,13]]): # players or guards
 			self.state = True
 		else:
 			self.state = False
 		if not paststate == self.state: # update tile image data
-			if type == 'yellow':
+			if self.type == 'yellow':
 				newtile = 8
-			if type == 'red':
+			if self.type == 'red':
 				newtile = 18
-			if type == 'blue':
+			if self.type == 'blue':
 				newtile = 28
 			if self.state == True:
 				newtile += 1
 			self.parent.tiledlayers.UpdateTileLayer(self.tile, 1, newtile)
+			if not self.statechange_callback == None:
+				self.statechange_callback(self)
+
+class Item(object):
+	def __init__(self,parent,id,tile):
+		self.parent = parent
+		self.id = id
+		self.tile = tile
+		ts = self.parent.tiledlayers.tilesize
+		msx = self.parent.tiledlayers.map_size[0]
+		self.x = ts*(tile%msx)+int(ts/2)
+		self.y = ts*int(tile/msx)+int(ts/2)
+		self.parent.tiledlayers.InsertObj(tile,self)
+		self.active = True
+		self.flying = False
+	
+	def Pickup(self):
+		self.active = False
+		self.parent.tiledlayers.RemoveObj(self.tile,self)
+	
+	def Throw(self,x,y,vx,vy):
+		self.flying = True
+		self.x = x
+		self.y = y
+		self.vx = vx
+		self.vy = vy
+		self.to = 10
+	
+	def Update(self):
+		if not self.flying:
+			return
+		self.x += self.vx
+		self.y += self.vy
+		(self.x,self.y) = self.parent.tiledlayers.HandleObjectWallCollision((self.x,self.y),(24,24),(self.vx,self.vy),occtype='fly')
+		self.to -= 1
+		if self.to == 0:
+			self.flying = False
+			self.active = True
+			ts = self.parent.tiledlayers.tilesize
+			self.tile = self.parent.tiledlayers.map_size[0]*int(self.y/ts)+int(self.x/ts)
+			self.parent.tiledlayers.InsertObj(self.tile,self)
+	
+	def Draw(self,screen):
+		if self.active or self.flying:
+			tilecoords = resources.itemsprites_coords[self.id]
+			screen.blit(resources.itemsprites, (self.x-16-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-16-self.parent.camera.y+int(self.parent.camera.h_view/2)), area=tilecoords)
 
 class TiledLayers(object):
     def __init__(self,parent):
@@ -108,7 +156,7 @@ class TiledLayers(object):
         # Spawnlayer data:
         # 0-5 = key, 6-11 = player, 13 = guard, 14 = sword, 15 = hammer, 16 = duck, 17 = cake
         
-        # set start and end tiles from occupancy map data
+        # set player start tiles from spawn layer
         self.player_start_tiles = []
         self.player_ids = []
         for i in range(6):
@@ -118,12 +166,26 @@ class TiledLayers(object):
         		self.player_start_tiles.append(tile)
         	except:
         		pass
+        
+        # check for items in spawn layer
+        item_tiles = [i for i, x in enumerate(self.spawnlayer) if x in [0,1,2,3,4,5,14,15,16,17]]
+        self.items = []
+        for tile in item_tiles:
+        	self.items.append(Item(self.parent,self.spawnlayer[tile],tile))
+        
+        # get goal tiles from occlayer
         self.finish_tiles = [i for i, x in enumerate(self.occlayer) if x == -7]
         
-        # fix up occlayer to have zeros, now player start/end data extracted
+        # fix up occlayer to have zeros, now player end data extracted
         inds = [i for i, x in enumerate(self.occlayer) if x < 0]
         for i in inds:
         	self.occlayer[i] = 0
+        
+        # create occlayer for flying items, discounts fences as occupied
+        self.occlayerfly = self.occlayer[:]
+        fixtiles = [i for i, x in enumerate(self.tilelayer_mg) if x in [16,17]]
+        for tile in fixtiles:
+        	self.occlayerfly[tile] = 0
         
         # Initialise player data and load into object layer
         for i in range(len(self.player_ids)):
@@ -133,7 +195,7 @@ class TiledLayers(object):
         	self.parent.inmates[i].x = playerx
         	self.parent.inmates[i].y = playery
         	self.parent.inmates[i].id = self.player_ids[i]
-        	self.InsertObj(tile,self.player_ids[i])
+        	self.InsertObj(tile,self.parent.inmates[i])
         
         # Initialise passages (doors and breakable walls)
         self.passages = []
@@ -148,7 +210,7 @@ class TiledLayers(object):
         			state = 'open'
         		else:
         			state = 'closed'
-        		print('new door: ',type,tile,state)
+        		#print('new door: ',type,tile,state)
         		self.passages.append(Passage(self.parent,type,tile,state=state))
         
         # Initialise buttons
@@ -159,7 +221,7 @@ class TiledLayers(object):
         	if self.tilelayer_mg[tile] in button_tiles:
         		ind = button_tiles.index(self.tilelayer_mg[tile])
         		type = button_names[ind]
-        		print('new button: ',type,tile)
+        		#print('new button: ',type,tile)
         		self.buttons.append(Button(self.parent,type,tile))
         
         # render tiled layers
@@ -190,11 +252,13 @@ class TiledLayers(object):
     def UpdateTileMapEntities(self): # update routine called by main game loop
     	for button in self.buttons:
     		button.Update()
+    	for item in self.items:
+    		item.Update()
     
     def UpdateTileLayer(self, tile, layer, tileval): # layer: 1: mid, 2: fore
     	coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]
     	if layer == 2:
-    		self.fglayer.blit(resources.tiles, (coords[0],coords[1]), area=resources.tiles_coords[139]) # blit with transperancy
+    		self.fglayer.blit(resources.purpletile, (coords[0],coords[1])) # blit with transparency
     		if tileval >= 0:
     			tilecoords = resources.tiles_coords[tileval]
     			self.fglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
@@ -218,24 +282,29 @@ class TiledLayers(object):
             y = self.tilesize*int(tile/self.map_size[0])+4
             pygame.draw.rect(screen, (0,255,0), pygame.Rect((x-self.parent.camera.x+int(self.parent.camera.w_view/2),y-self.parent.camera.y+int(self.parent.camera.h_view/2)),(24,24)))
     
-    def InsertObj(self,tileind,objid):
-        self.objectlayer[tileind].append(objid)
-        if objid in [6,7,8,9,10,11] and tileind in self.finish_tiles:
-            self.players_safe.append(objid)
+    def InsertObj(self,tileind,obj):
+        self.objectlayer[tileind].append(obj)
+        if obj.id in [6,7,8,9,10,11] and tileind in self.finish_tiles:
+            self.players_safe.append(obj.id)
             if len(self.players_safe) == len(self.player_ids):
             	self.exiting = True
     
-    def RemoveObj(self,tileind,objid):
-        if objid in self.objectlayer[tileind]:
-            self.objectlayer[tileind].pop(self.objectlayer[tileind].index(objid))
-            if objid in [6,7,8,9,10,11] and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
-            	self.players_safe.remove(objid)
+    def RemoveObj(self,tileind,obj):
+        if obj in self.objectlayer[tileind]:
+            self.objectlayer[tileind].pop(self.objectlayer[tileind].index(obj))
+            if obj.id in [6,7,8,9,10,11] and tileind in self.finish_tiles: # TODO: fix up for recording all inmates get to end?
+            	self.players_safe.remove(obj.id)
     
-    def UpdateObj(self,tileind_old,tileind_new,objid):
-        self.RemoveObj(tileind_old,objid)
-        self.InsertObj(tileind_new,objid)
+    def UpdateObj(self,tileind_old,tileind_new,obj):
+        self.RemoveObj(tileind_old,obj)
+        self.InsertObj(tileind_new,obj)
     
-    def HandleObjectWallCollision(self,objpos,objsize,objmovevec):
+    def HandleObjectWallCollision(self,objpos,objsize,objmovevec,occtype='normal'):
+        
+        if occtype == 'normal':
+        	occlayer = self.occlayer
+        elif occtype == 'fly':
+        	occlayer = self.occlayerfly
         
         x = objpos[0]
         y = objpos[1]
@@ -256,74 +325,74 @@ class TiledLayers(object):
         tileocc_r = self.map_size[0]*int(y/ts)+int((x+(sx/2))/ts)
         
         if vx > 0 and vy == 0: # handle lateral/longitudinal collisions
-            if self.occlayer[tileocc_ur] or self.occlayer[tileocc_lr] or self.occlayer[tileocc_r]:
+            if occlayer[tileocc_ur] or occlayer[tileocc_lr] or occlayer[tileocc_r]:
                 x = ts*(tileocc_ur % self.map_size[0]) - 1 - int(sx/2)
         elif vx < 0 and vy == 0:
-            if self.occlayer[tileocc_ul] or self.occlayer[tileocc_ll] or self.occlayer[tileocc_l]:
+            if occlayer[tileocc_ul] or occlayer[tileocc_ll] or occlayer[tileocc_l]:
                 x = ts*(tileocc_ul % self.map_size[0]) + 1 + int(sx/2) + ts
         elif vx == 0 and vy > 0:
-            if self.occlayer[tileocc_lr] or self.occlayer[tileocc_ll] or self.occlayer[tileocc_d]:
+            if occlayer[tileocc_lr] or occlayer[tileocc_ll] or occlayer[tileocc_d]:
                 y = ts*int(tileocc_ll/self.map_size[0]) - 1 - int(sy/2)
         elif vx == 0 and vy < 0:
-            if self.occlayer[tileocc_ul] or self.occlayer[tileocc_ur] or self.occlayer[tileocc_u]:
+            if occlayer[tileocc_ul] or occlayer[tileocc_ur] or occlayer[tileocc_u]:
                 y = ts*int(tileocc_ul/self.map_size[0]) + 1 + int(sy/2) + ts
         elif vx > 0 and vy < 0: # handle corner cases
             xref = ts*(tileocc_ur % self.map_size[0]) - 1 - int(sx/2)
             yref = ts*int(tileocc_ur/self.map_size[0]) + 1 + int(sy/2) + ts
-            if self.occlayer[tileocc_ul] and self.occlayer[tileocc_lr]:
+            if occlayer[tileocc_ul] and occlayer[tileocc_lr]:
                 x = xref
                 y = yref
-            elif self.occlayer[tileocc_ul]:
+            elif occlayer[tileocc_ul]:
                 y = yref
-            elif self.occlayer[tileocc_lr]:
+            elif occlayer[tileocc_lr]:
                 x = xref
-            elif self.occlayer[tileocc_ur]:
-                if fabs(x-xref) < fabs(y-yref) or self.occlayer[tileocc_ur+self.map_size[0]]:
+            elif occlayer[tileocc_ur]:
+                if fabs(x-xref) < fabs(y-yref) or occlayer[tileocc_ur+self.map_size[0]]:
                     x = xref
                 else:
                     y = yref
         elif vx > 0 and vy > 0:
             xref = ts*(tileocc_lr % self.map_size[0]) - 1 - int(sx/2)
             yref = ts*int(tileocc_lr/self.map_size[0]) - 1 - int(sy/2)
-            if self.occlayer[tileocc_ll] and self.occlayer[tileocc_ur]:
+            if occlayer[tileocc_ll] and occlayer[tileocc_ur]:
                 x = xref
                 y = yref
-            elif self.occlayer[tileocc_ll]:
+            elif occlayer[tileocc_ll]:
                 y = yref
-            elif self.occlayer[tileocc_ur]:
+            elif occlayer[tileocc_ur]:
                 x = xref
-            elif self.occlayer[tileocc_lr]:
-                if fabs(x-xref) < fabs(y-yref) or self.occlayer[tileocc_lr-self.map_size[0]]:
+            elif occlayer[tileocc_lr]:
+                if fabs(x-xref) < fabs(y-yref) or occlayer[tileocc_lr-self.map_size[0]]:
                     x = xref
                 else:
                     y = yref
         elif vx < 0 and vy > 0:
             xref = ts*(tileocc_ll % self.map_size[0]) + 1 + int(sx/2) + ts
             yref = ts*int(tileocc_ll/self.map_size[0]) - 1 - int(sy/2)
-            if self.occlayer[tileocc_ul] and self.occlayer[tileocc_lr]:
+            if occlayer[tileocc_ul] and occlayer[tileocc_lr]:
                 x = xref
                 y = yref
-            elif self.occlayer[tileocc_lr]:
+            elif occlayer[tileocc_lr]:
                 y = yref
-            elif self.occlayer[tileocc_ul]:
+            elif occlayer[tileocc_ul]:
                 x = xref
-            elif self.occlayer[tileocc_ll]:
-                if fabs(x-xref) < fabs(y-yref) or self.occlayer[tileocc_ll-self.map_size[0]]:
+            elif occlayer[tileocc_ll]:
+                if fabs(x-xref) < fabs(y-yref) or occlayer[tileocc_ll-self.map_size[0]]:
                     x = xref
                 else:
                     y = yref
         elif vx < 0 and vy < 0:
             xref = ts*(tileocc_ul % self.map_size[0]) + 1 + int(sx/2) + ts
             yref = ts*int(tileocc_ul/self.map_size[0]) + 1 + int(sy/2) + ts
-            if self.occlayer[tileocc_ur] and self.occlayer[tileocc_ll]:
+            if occlayer[tileocc_ur] and occlayer[tileocc_ll]:
                 x = xref
                 y = yref
-            elif self.occlayer[tileocc_ur]:
+            elif occlayer[tileocc_ur]:
                 y = yref
-            elif self.occlayer[tileocc_ll]:
+            elif occlayer[tileocc_ll]:
                 x = xref
-            elif self.occlayer[tileocc_ul]:
-                if fabs(x-xref) < fabs(y-yref) or self.occlayer[tileocc_ul+self.map_size[0]]:
+            elif occlayer[tileocc_ul]:
+                if fabs(x-xref) < fabs(y-yref) or occlayer[tileocc_ul+self.map_size[0]]:
                     x = xref
                 else:
                     y = yref

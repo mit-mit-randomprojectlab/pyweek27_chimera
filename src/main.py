@@ -35,6 +35,6 @@ def main(mainpath):
     dir.addscene('maingame', maingame)
     
     # start up director
-    dir.change_scene('maingame', [True, 'testbig002'])
+    dir.change_scene('maingame', [True, 'testbig003'])
     dir.loop()
     

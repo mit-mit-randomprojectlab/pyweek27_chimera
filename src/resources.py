@@ -28,6 +28,11 @@ def init(mainpath,screen_res):
 		for i in range(10):
 			tiles_coords.append((i*32, j*32, 32, 32))
 	
+	global purpletile
+	purpletile = pygame.Surface((32,32))
+	purpletile.fill((255,0,255))
+	purpletile.convert()
+	
 	# Load sprites
 	global charsprites
 	global charsprites_coords
@@ -38,6 +43,16 @@ def init(mainpath,screen_res):
 	for j in range(7):
 		for i in range(12):
 			charsprites_coords.append((i*32, j*48, 32, 48))
+	
+	global itemsprites
+	global itemsprites_coords
+	
+	itemsprites = pygame.image.load(os.path.join(mainpath,'data','gfx','items_2x.png')).convert()
+	itemsprites.set_colorkey((255,0,255))
+	itemsprites_coords = []
+	for j in range(7):
+		for i in range(6):
+			itemsprites_coords.append((i*32, j*32, 32, 32))
 	
 	# Load level data
 	global levels
