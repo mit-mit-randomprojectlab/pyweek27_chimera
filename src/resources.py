@@ -14,6 +14,9 @@ import level_data
 
 def init(mainpath,screen_res):
 	
+	global debug_graphics
+	debug_graphics = True
+	
 	# Load tileset image, set tile coords
 	global tiles
 	global tiles_coords
@@ -44,7 +47,8 @@ def init(mainpath,screen_res):
 		level_name = f[:-5]
 		levels[level_name] = level_data.LevelData(path=os.path.join(mainpath,'data','level',f))
 	
-	
+	global level_list
+	level_list = ['testbig001','test001']
 	
 	# pre-sets and controls
 	global controlmap
@@ -53,5 +57,6 @@ def init(mainpath,screen_res):
 	controlmap['L'] = K_LEFT
 	controlmap['D'] = K_DOWN
 	controlmap['U'] = K_UP
+	controlmap['switch'] = K_TAB
 	controlmap['action'] = K_SPACE
 
