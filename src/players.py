@@ -21,9 +21,19 @@ class MasterControl(object):
 		self.parent = parent
 		self.CM = controlmap
 		self.current_p = 0
+		self.exiting = False
 	
 	def ProcessKeyEvent(self,event):
 		current_control = self.parent.inmates[self.current_p].control
+		if self.parent.caught: # cut controls if caught
+			for inmate in self.parent.inmates:
+				inmate.control.Stop()
+			if not self.exiting:
+				self.current_p = self.parent.inmates.index(self.parent.caught_id)
+				self.parent.caught_id.flash_to = 60
+				self.parent.camera.SetWaypoint([self.parent.caught_id.x,self.parent.caught_id.y])
+				self.exiting = True
+			return
 		if self.parent.tiledlayers.exiting:
 			current_control.Stop()
 			return
@@ -94,6 +104,8 @@ class Inmate(object):
 		self.item = None
 		
 		self.control = KeyControl()
+		
+		self.seen = False # debugging
 	
 	def CheckforItems(self):
 		ts = self.parent.tiledlayers.tilesize
@@ -252,7 +264,7 @@ class Inmate(object):
 		imh = 48
 		boxw = 24
 		boxh = 24
-		if resources.debug_graphics:
+		if resources.debug_graphics and self.seen:
 			pygame.draw.rect(screen, (255,0,0), pygame.Rect((self.x-(boxw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(boxh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(boxw,boxh)))
 		if self.flash_to == -1 or (self.flash_to % 8) < 4:
 			screen.blit(resources.charsprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20), area=tilecoords)

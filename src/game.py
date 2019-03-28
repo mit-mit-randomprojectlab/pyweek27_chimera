@@ -140,6 +140,8 @@ class MainGame(GameScene):
 		
 		self.paused = False
 		self.exiting = False
+		self.caught = False
+		self.caught_to = 0
 		
 		# Initialise objects
 		self.camera = Camera(self,self.window_size)
@@ -198,6 +200,12 @@ class MainGame(GameScene):
 			self.exiting = True
 			self.fade.FadeOut()
 		
+		# check reset level because caught
+		if self.caught and self.caught_to > 0:
+			self.caught_to -= 1
+			if self.caught_to == 0:
+				self.fade.FadeOut()
+		
 		# Control fade in/out, look for end game cues
 		self.fade.Update()
 		if self.fade.finished_out:
@@ -207,6 +215,8 @@ class MainGame(GameScene):
 					ind_next = 0
 				next_level = resources.level_list[ind_next]
 				self.director.change_scene('maingame', [True, next_level])
+			elif self.caught: # reset level
+				self.director.change_scene('maingame', [True, self.tiledlayers.level_id])
 		
 	def on_event(self, events):
 		for event in events:

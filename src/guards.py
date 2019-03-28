@@ -26,8 +26,8 @@ class Guard(object):
 		self.parent.tiledlayers.InsertObj(tile,self)
 		self.item = None
 		
-		self.speed = 4
-		self.speed_d = 3
+		self.speed = 5
+		self.speed_d = 4
 		self.speeda = 2
 		self.speed_da = 2
 		
@@ -46,6 +46,99 @@ class Guard(object):
 		#self.mode = 'none'
 		#self.waypoints = []
 		#self.current_wp = -1
+		
+		self.maxrpatrol = 32*10
+		self.maxrinvestigate = 32*5
+		self.maxrchase = 32*5
+		
+		self.wait_to = -1
+		self.target = None
+		self.last_seen = [-1,-1]
+		self.tlastseen = 0
+		
+		self.was_stuck = False
+		self.stuck_to = 0
+	
+	def CheckVisibility(self,xtarget,ytarget,maxr):
+		msx = self.parent.tiledlayers.map_size[0]
+		ts = self.parent.tiledlayers.tilesize
+		dist = sqrt(pow(xtarget-self.x,2)+pow(ytarget-self.y,2))
+		if dist > maxr:
+			return False
+		if dist < 32:
+			return True
+		step = 8
+		dx = step*(xtarget-self.x)/dist
+		dy = step*(ytarget-self.y)/dist
+		x = self.x
+		y = self.y
+		n = dist/step
+		for i in range(int(n)):
+			x += dx
+			y += dy
+			tile = msx*int(y/ts)+int(x/ts)
+			if self.parent.tiledlayers.occlayer[tile]:
+				return False
+		return True
+	
+	def CheckClearPath(self,xtarget,ytarget,maxr):
+		msx = self.parent.tiledlayers.map_size[0]
+		ts = self.parent.tiledlayers.tilesize
+		dist = sqrt(pow(xtarget-self.x,2)+pow(ytarget-self.y,2))
+		if dist > maxr:
+			return False
+		if dist < 32:
+			return True
+		step = 8
+		dx = step*(xtarget-self.x)/dist
+		dy = step*(ytarget-self.y)/dist
+		x = self.x
+		y = self.y
+		x2 = self.x - dy
+		y2 = self.y + dx
+		x3 = self.x + dy
+		y3 = self.y - dx
+		n = dist/step
+		for i in range(int(n)):
+			x += dx
+			y += dy
+			tile = msx*int(y/ts)+int(x/ts)
+			x2 += dx
+			y2 += dy
+			tile2 = msx*int(y2/ts)+int(x2/ts)
+			x3 += dx
+			y3 += dy
+			tile3 = msx*int(y3/ts)+int(x3/ts)
+			if self.parent.tiledlayers.occlayer[tile] or self.parent.tiledlayers.occlayer[tile2] or self.parent.tiledlayers.occlayer[tile3]:
+				return False
+		return True
+	
+	def IncrementPath(self,speed):
+		if len(self.path) > 0: # have a path, control player to next point
+			tsize = self.parent.tiledlayers.tilesize
+			msx = self.parent.tiledlayers.map_size[0]
+			xdest = tsize*(self.path[0]%msx) + int(tsize/2)
+			ydest = tsize*int(self.path[0]/msx) + int(tsize/2)
+			if abs(xdest-self.x) <= speed and abs(ydest-self.y) <= speed:
+				tile_achieved = self.path.pop(0)
+				if len(self.path) > 0: # still moving
+					if self.parent.tiledlayers.occlayer[self.path[0]]: # check can still traverse
+						self.path = []
+					else:
+						xdest = tsize*(self.path[0]%msx) + int(tsize/2)
+						ydest = tsize*int(self.path[0]/msx) + int(tsize/2)
+			if abs(xdest-self.x) > speed:
+				vx = int((xdest-self.x)/abs(xdest-self.x))
+			else:
+				vx = 0
+			if abs(ydest-self.y) > speed:
+				vy = int((ydest-self.y)/abs(ydest-self.y))
+			else:
+				vy = 0
+		else:
+			vx = 0
+			vy = 0
+		return (vx,vy)
 	
 	def UpdateMotion(self):
 		
@@ -54,10 +147,19 @@ class Guard(object):
 		init_tile = self.parent.tiledlayers.map_size[0]*int(self.y/tsize)+int(self.x/tsize)
 		
 		# Run through behaviours
+		
+		#speed = self.speeda
+		#speed_d = self.speed_da
+		speed = self.speed
+		speed_d = self.speed_d
+		anispeed2 = self.anispeed2
+		
+		direct_chase = False
+		
 		if self.mode == 'none':
 			vx = 0
 			vy = 0
-		if self.mode == 'patrol':
+		elif self.mode == 'patrol':
 			
 			speed = self.speeda
 			speed_d = self.speed_da
@@ -73,40 +175,132 @@ class Guard(object):
 					if self.waypoints[self.current_wp] == -1: # cue to go back and repeat waypoints
 						self.current_wp = 0
 					self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
-			if len(self.path) > 0: # have a path, control player to next point
-				xdest = tsize*(self.path[0]%msx) + int(tsize/2)
-				ydest = tsize*int(self.path[0]/msx) + int(tsize/2)
-				if abs(xdest-self.x) <= speed and abs(ydest-self.y) <= speed:
-					tile_achieved = self.path.pop(0)
-					if len(self.path) > 0: # still moving
-						if self.parent.tiledlayers.occlayer[self.path[0]]: # check can still traverse
-							self.path = []
-						else:
-							xdest = tsize*(self.path[0]%msx) + int(tsize/2)
-							ydest = tsize*int(self.path[0]/msx) + int(tsize/2)
-				if abs(xdest-self.x) > speed:
-					vx = int((xdest-self.x)/abs(xdest-self.x))
-				else:
-					vx = 0
-				if abs(ydest-self.y) > speed:
-					vy = int((ydest-self.y)/abs(ydest-self.y))
-				else:
-					vy = 0
-			else: # no path available
+			
+			# control along path
+			(vx,vy) = self.IncrementPath(speed)
+			
+			# check if can see any players
+			for inmate in self.parent.inmates:
+				seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrpatrol)
+				if seen:
+					self.mode = 'chase'
+					self.target = inmate
+					self.path = []
+					self.last_seen = [self.target.x,self.target.y]
+					self.tlastseen = 0
+					break
+		
+		elif self.mode == 'chase':
+			
+			# update time since last seen
+			self.tlastseen += 1
+			
+			dist = sqrt(pow(self.target.x-self.x,2)+pow(self.target.y-self.y,2))
+			if dist < 48 and not self.parent.caught:
+				self.parent.caught = True
+				self.parent.caught_to = 60
+				self.parent.caught_id = self.target
+			if dist > self.maxrpatrol:
+				self.mode = 'wait'
+				self.wait_to = 60
 				vx = 0
 				vy = 0
+			else:
+				seen = self.CheckClearPath(self.target.x,self.target.y,self.maxrpatrol)
+				if seen and not self.was_stuck and self.stuck_to == 0:
+					
+					direct_chase = True
+					self.path = []
+					self.last_seen = [self.target.x,self.target.y]
+					self.tlastseen = 0
+					if abs(self.target.x-self.x) > speed:
+						vx = int((self.target.x-self.x)/abs(self.target.x-self.x))
+					else:
+						vx = 0
+					if abs(self.target.y-self.y) > speed:
+						vy = int((self.target.y-self.y)/abs(self.target.y-self.y))
+					else:
+						vy = 0
+				else:
+					# check if other players visible, better target
+					for inmate in self.parent.inmates:
+						seen_other = self.CheckClearPath(inmate.x,inmate.y,self.maxrchase)
+						if seen_other:
+							self.mode = 'chase'
+							self.target = inmate
+							self.path = []
+							self.last_seen = [self.target.x,self.target.y]
+							self.tlastseen = 0
+							vx = 0
+							vy = 0
+							break
+					if not seen_other:
+						if self.tlastseen == 30:
+							
+							target_tile = msx*int(self.target.y/tsize)+int(self.target.x/tsize)
+							self.path = self.parent.tiledlayers.planner.astar_path(init_tile, target_tile)
+							#tile_skip = self.path.pop(0)
+							self.last_seen = [self.target.x,self.target.y]
+						if len(self.path) > 0:
+							(vx,vy) = self.IncrementPath(speed)
+						else:
+							distlastseen = sqrt(pow(self.last_seen[0]-self.x,2)+pow(self.last_seen[1]-self.y,2))
+							#if distlastseen < 2*speed:
+							if distlastseen < 32:
+								
+								self.mode = 'wait'
+								self.wait_to = 60
+								self.path = []
+								vx = 0
+								vy = 0
+							else:
+								#print('planning')
+								target_tile = msx*int(self.last_seen[1]/tsize)+int(self.last_seen[0]/tsize)
+								self.path = self.parent.tiledlayers.planner.astar_path(init_tile, target_tile)
+								#tile_skip = self.path.pop(0)
+								if len(self.path) == 0:
+									self.mode = 'wait'
+									self.wait_to = 60
+									self.path = []
+								vx = 0
+								vy = 0
 		
-		else:
+		elif self.mode == 'wait':
 			
-			speed = self.speed
-			speed_d = self.speed_d
-			anispeed2 = self.anispeed2
+			vx = 0
+			vy = 0
+			
+			# check if can see any players
+			for inmate in self.parent.inmates:
+				seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrpatrol)
+				if seen:
+					self.mode = 'chase'
+					self.target = inmate
+					self.path = []
+					self.last_seen = [self.target.x,self.target.y]
+					self.tlastseen = 0
+					break
+			
+			self.wait_to -= 1
+			if self.wait_to < 0:
+				self.mode = 'patrol'
+		
+		# Update whether seen
+		for inmate in self.parent.inmates:
+			seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrpatrol)
+			if seen:
+				inmate.seen = True
+			else:
+				inmate.seen = False
 			
 		lastmoving = self.moving
 		if abs(vx) > 0 or abs(vy) > 0:
 			self.moving = True
 		else:
 			self.moving = False
+		
+		prevx = self.x
+		prevy = self.y
 		
 		if abs(vx) > 0 and abs(vy) > 0:
 			self.x = self.x + speed_d*vx
@@ -146,9 +340,18 @@ class Guard(object):
 			self.y = self.parent.tiledlayers.map_size[1]*tsize-int(tsize/2)
 		
 		# Handle all collisions off solid objects
-		playersize_x = 24
-		playersize_y = 24
+		playersize_x = 16
+		playersize_y = 16
 		(self.x,self.y) = self.parent.tiledlayers.HandleObjectWallCollision((self.x,self.y),(playersize_x,playersize_y),(vx,vy))
+		
+		# double check not getting stuck on wall
+		self.was_stuck = False
+		if self.stuck_to > 0:
+			self.stuck_to -= 1
+		if direct_chase and self.x == prevx and self.y == prevy:
+			self.was_stuck = True
+			self.stuck_to = 30
+			#print('stuck!')
 		
 		# Check if need to inform tilemap object layer of updates
 		final_tile = self.parent.tiledlayers.map_size[0]*int(self.y/tsize)+int(self.x/tsize)
@@ -157,6 +360,7 @@ class Guard(object):
 	
 	def Draw(self,screen):
 		ts = self.parent.tiledlayers.tilesize
+		msx = self.parent.tiledlayers.map_size[0]
 		tile = 6*12 + self.gait
 		if self.moving:
 			tile += 4
@@ -183,3 +387,11 @@ class Guard(object):
 				tile = 13
 			tilecoords = resources.itemsprites_coords[tile]
 			screen.blit(resources.itemsprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2)+8,self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20+8), area=tilecoords)
+		if len(self.path) > 0 and resources.debug_graphics:
+			for tile in self.path:
+				x = ts*(tile%msx) + int(ts/2)
+				y = ts*int(tile/msx) + int(ts/2)
+				pygame.draw.rect(screen, (255,128,0), pygame.Rect((x-(8/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),y-int(8/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(8,8)))
+	
+		
+			
