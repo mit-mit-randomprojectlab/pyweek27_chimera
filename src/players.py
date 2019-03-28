@@ -26,13 +26,6 @@ class MasterControl(object):
 	def ProcessKeyEvent(self,event):
 		current_control = self.parent.inmates[self.current_p].control
 		if self.parent.caught: # cut controls if caught
-			for inmate in self.parent.inmates:
-				inmate.control.Stop()
-			if not self.exiting:
-				self.current_p = self.parent.inmates.index(self.parent.caught_id)
-				self.parent.caught_id.flash_to = 60
-				self.parent.camera.SetWaypoint([self.parent.caught_id.x,self.parent.caught_id.y])
-				self.exiting = True
 			return
 		if self.parent.tiledlayers.exiting:
 			current_control.Stop()

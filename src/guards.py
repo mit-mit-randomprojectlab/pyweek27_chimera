@@ -40,15 +40,15 @@ class Guard(object):
 		self.ani_to = -1
 		
 		self.path = []
-		#self.mode = 'patrol'
-		#self.waypoints = [141,341,528,391,-1]
-		#self.current_wp = 0
-		self.mode = 'none'
-		self.waypoints = []
-		self.current_wp = -1
+		self.mode = 'patrol'
+		self.waypoints = [141,341,528,391,-1]
+		self.current_wp = 0
+		#self.mode = 'none'
+		#self.waypoints = []
+		#self.current_wp = -1
 		
 		self.maxrpatrol = 32*10
-		self.maxrinvestigate = 32*5
+		self.maxrinvestigate = 32*3
 		self.maxrchase = 32*5
 		
 		self.wait_to = -1
@@ -179,6 +179,17 @@ class Guard(object):
 			# control along path
 			(vx,vy) = self.IncrementPath(speed)
 			
+			# check if can see any flying items
+			for item in self.parent.tiledlayers.items:
+				if item.flying:
+					seen = self.CheckVisibility(item.x,item.y,self.maxrpatrol)
+					if seen:
+						self.mode = 'investigate'
+						self.target = item
+						self.path = []
+						self.wait_to = 60
+						break
+			
 			# check if can see any players
 			for inmate in self.parent.inmates:
 				seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrpatrol)
@@ -190,6 +201,39 @@ class Guard(object):
 					self.tlastseen = 0
 					break
 		
+		elif self.mode == 'investigate':
+			
+			speed = self.speeda
+			speed_d = self.speed_da
+			anispeed2 = self.anispeed2a
+			vx = 0
+			vy = 0
+			
+			# check if can see any players
+			for inmate in self.parent.inmates:
+				seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrinvestigate)
+				if seen:
+					self.mode = 'chase'
+					self.target = inmate
+					self.path = []
+					self.last_seen = [self.target.x,self.target.y]
+					self.tlastseen = 0
+					break
+			
+			self.wait_to -= 1
+			dist = sqrt(pow(self.target.x-self.x,2)+pow(self.target.y-self.y,2))
+			if self.wait_to < 0 and dist > 32:
+				target_tile = msx*int(self.target.y/tsize)+int(self.target.x/tsize)
+				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, target_tile)
+				self.wait_to = 5000
+			if len(self.path) > 0:
+				(vx,vy) = self.IncrementPath(speed)
+			elif self.wait_to > 60 and dist < 32:
+				self.wait_to = 90
+			if self.wait_to < 0 and dist < 32:
+				self.mode = 'patrol'
+				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
+			
 		elif self.mode == 'chase':
 			
 			# update time since last seen
@@ -200,6 +244,11 @@ class Guard(object):
 				self.parent.caught = True
 				self.parent.caught_to = 60
 				self.parent.caught_id = self.target
+				for inmate in self.parent.inmates:
+					inmate.control.Stop()
+				self.parent.caught_id.flash_to = 60
+				self.parent.camera.SetWaypoint([self.parent.caught_id.x,self.parent.caught_id.y])
+				self.parent.control.current_p = self.parent.inmates.index(self.parent.caught_id)
 			if dist > self.maxrpatrol:
 				self.mode = 'wait'
 				self.wait_to = 60
@@ -284,6 +333,7 @@ class Guard(object):
 			self.wait_to -= 1
 			if self.wait_to < 0:
 				self.mode = 'patrol'
+				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 		
 		# Update whether seen
 		for inmate in self.parent.inmates:
