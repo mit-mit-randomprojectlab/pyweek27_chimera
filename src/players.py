@@ -4,6 +4,8 @@
 players.py: classes for player-controlled inmates
 """
 
+from builtins import range
+
 import os
 import pygame
 from pygame.locals import *

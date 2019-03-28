@@ -4,6 +4,8 @@
 tilemap.py: classes for tilemap and environment
 """
 
+from builtins import range
+
 import os
 import pygame
 from pygame.locals import *
@@ -11,7 +13,10 @@ from gamedirector import *
 from math import *
 import random
 
+import heapq
+
 import resources
+import guards
 
 # Passage: a class for both doors and breakable walls, which share similar behaviours
 class Passage(object):
@@ -124,6 +129,86 @@ class Item(object):
 			tilecoords = resources.itemsprites_coords[self.id]
 			screen.blit(resources.itemsprites, (self.x-16-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-16-self.parent.camera.y+int(self.parent.camera.h_view/2)), area=tilecoords)
 
+class Planner(object):
+    def __init__(self,parent):
+        self.maxsteps = 600
+        (self.w, self.h) = parent.map_size
+        self.tilesize = parent.tilesize
+        self.h_occlayer = parent.occlayer
+        self.pn = 0
+        self.touched = [0 for i in range(self.w*self.h)]
+        self.cost_so_far = [0 for i in range(self.w*self.h)]
+        self.came_from = [0 for i in range(self.w*self.h)]
+    
+    def getneighbours(self, i):
+        neighbours = []
+        x = i%self.w
+        y = i/self.w
+        cost = 1
+        costd = sqrt(2)
+        if x > 0 and not self.h_occlayer[i-1]:
+            neighbours.append((i-1,cost))
+            if y > 0 and not self.h_occlayer[i-self.w] and not self.h_occlayer[i-self.w-1]:
+                neighbours.append((i-self.w-1,costd))
+            if y < (self.h-1) and not self.h_occlayer[i+self.w] and not self.h_occlayer[i+self.w-1]:
+                neighbours.append((i+self.w-1,costd))
+        if x < (self.w-1) and not self.h_occlayer[i+1]:
+            neighbours.append((i+1,cost))
+            if y > 0 and not self.h_occlayer[i-self.w] and not self.h_occlayer[i-self.w+1]:
+                neighbours.append((i-self.w+1,costd))
+            if y < (self.h-1) and not self.h_occlayer[i+self.w] and not self.h_occlayer[i+self.w+1]:
+                neighbours.append((i+self.w+1,costd))
+        if y > 0 and not self.h_occlayer[i-self.w]:
+            neighbours.append((i-self.w,cost))
+        if y < (self.h-1) and not self.h_occlayer[i+self.w]:
+            neighbours.append((i+self.w,cost))
+        return neighbours
+    
+    def heuristic(self,i,j):
+        xi = i%self.w
+        yi = i/self.w
+        xj = j%self.w
+        yj = j/self.w
+        return abs(xi - xj) + abs(yi - yj)
+    
+    def astar_path(self, start, goal):
+        if self.h_occlayer[goal]: # goal is an obstacle
+            return []
+        self.pn += 1
+        frontier = []
+        heapq.heappush(frontier, (0, start))
+        self.touched[start] = self.pn
+        self.cost_so_far[start] = 0
+        self.came_from[start] = None
+        
+        nsteps = 0
+        
+        while True:
+            nsteps += 1
+            if len(frontier) == 0: # ran out of options, no path
+                #return None
+                return []
+            current = heapq.heappop(frontier)[1]
+            
+            if nsteps == self.maxsteps: # tried too hard
+                return []
+            
+            if current == goal:  # got it
+                path = [current]
+                while not self.came_from[current] == None: # step backwards through came froms to get path
+                    current = self.came_from[current]
+                    path.insert(0,current)
+                return path
+            
+            for next in self.getneighbours(current):
+                new_cost = self.cost_so_far[current] + next[1]
+                if self.touched[next[0]] < self.pn or new_cost < self.cost_so_far[next[0]]:
+                    self.touched[next[0]] = self.pn
+                    self.cost_so_far[next[0]] = new_cost
+                    priority = new_cost + self.heuristic(goal, next[0])
+                    heapq.heappush(frontier, (priority, next[0]))
+                    self.came_from[next[0]] = current
+
 class TiledLayers(object):
     def __init__(self,parent):
         self.parent = parent
@@ -224,6 +309,15 @@ class TiledLayers(object):
         		#print('new button: ',type,tile)
         		self.buttons.append(Button(self.parent,type,tile))
         
+        # Create planning service
+        self.planner = Planner(self)
+        
+        # Load guards
+        guard_tiles = [i for i, x in enumerate(self.spawnlayer) if x in [13]]
+        self.guards = []
+        for tile in guard_tiles:
+        	self.guards.append(guards.Guard(self.parent,tile))
+        
         # render tiled layers
         self.bglayer = pygame.Surface((self.tilesize*self.map_size[0],self.tilesize*self.map_size[1]))
         self.bglayer.fill((255,0,255))
@@ -254,6 +348,8 @@ class TiledLayers(object):
     		button.Update()
     	for item in self.items:
     		item.Update()
+    	for guard in self.guards:
+    		guard.UpdateMotion()
     
     def UpdateTileLayer(self, tile, layer, tileval): # layer: 1: mid, 2: fore
     	coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]

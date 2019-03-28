@@ -220,6 +220,8 @@ class MainGame(GameScene):
 		self.tiledlayers.RenderBGLayer(screen)
 		for item in self.tiledlayers.items:
 			item.Draw(screen)
+		for guard in self.tiledlayers.guards:
+			guard.Draw(screen)
 		for inmate in self.inmates:
 			inmate.Draw(screen)
 		self.tiledlayers.RenderFGLayer(screen)
