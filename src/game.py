@@ -166,12 +166,6 @@ class MainGame(GameScene):
 		self.background.fill((0,0,0))
 		self.fade.FadeIn()
 	
-	def DoorTest(self):
-		if self.tiledlayers.buttons[0].state == True and self.tiledlayers.buttons[1].state == True:
-			self.tiledlayers.passages[3].Open()
-		else:
-			self.tiledlayers.passages[3].Close()
-	
 	def on_update(self):
 	
 		# Update player motion and camera
@@ -184,9 +178,6 @@ class MainGame(GameScene):
 		
 		# Update level behaviours
 		self.behaviours.on_update()
-		
-		# testing functions
-		self.DoorTest()
 		
 		# framerate tracking
 		self.frsamples += 1

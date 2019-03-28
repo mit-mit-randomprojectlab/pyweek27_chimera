@@ -40,12 +40,12 @@ class Guard(object):
 		self.ani_to = -1
 		
 		self.path = []
-		self.mode = 'patrol'
-		self.waypoints = [141,341,528,391,-1]
-		self.current_wp = 0
-		#self.mode = 'none'
-		#self.waypoints = []
-		#self.current_wp = -1
+		#self.mode = 'patrol'
+		#self.waypoints = [141,341,528,391,-1]
+		#self.current_wp = 0
+		self.mode = 'none'
+		self.waypoints = []
+		self.current_wp = -1
 		
 		self.maxrpatrol = 32*10
 		self.maxrinvestigate = 32*5
