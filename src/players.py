@@ -241,6 +241,7 @@ class Inmate(object):
 				else:
 					speed = 8
 				self.item.Throw(self.x,self.y,speed*vx,speed*vy)
+				resources.soundfx['swish'].play()
 				self.item = None
 	
 	def Draw(self,screen):

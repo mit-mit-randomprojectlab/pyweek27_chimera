@@ -33,6 +33,11 @@ class Passage(object):
 		self.ChangeState('closed')
 	
 	def ChangeState(self, newstate):
+		if not self.state == newstate:
+			if 'door' in self.type:
+				resources.soundfx['door'].play()
+			else:
+				resources.soundfx['break'].play()
 		self.state = newstate
 		if newstate == 'open':
 			if 'door' in self.type:
@@ -84,6 +89,7 @@ class Button(object):
 			self.parent.tiledlayers.UpdateTileLayer(self.tile, 1, newtile)
 			if not self.statechange_callback == None:
 				self.statechange_callback(self)
+			resources.soundfx['button'].play()
 
 class Item(object):
 	def __init__(self,parent,id,tile):

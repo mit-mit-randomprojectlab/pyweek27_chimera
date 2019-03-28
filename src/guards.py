@@ -188,6 +188,7 @@ class Guard(object):
 						self.target = item
 						self.path = []
 						self.wait_to = 60
+						resources.soundfx['huh'].play()
 						break
 			
 			# check if can see any players
@@ -199,6 +200,7 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					resources.soundfx['siren'].play()
 					break
 		
 		elif self.mode == 'investigate':
@@ -218,6 +220,7 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					resources.soundfx['siren'].play()
 					break
 			
 			self.wait_to -= 1
@@ -228,7 +231,7 @@ class Guard(object):
 				self.wait_to = 5000
 			if len(self.path) > 0:
 				(vx,vy) = self.IncrementPath(speed)
-			elif self.wait_to > 60 and dist < 32:
+			elif self.wait_to > 90 and dist < 32:
 				self.wait_to = 90
 			if self.wait_to < 0 and dist < 32:
 				self.mode = 'patrol'
@@ -328,6 +331,7 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					resources.soundfx['siren'].play()
 					break
 			
 			self.wait_to -= 1

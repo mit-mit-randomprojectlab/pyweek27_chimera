@@ -65,6 +65,16 @@ def init(mainpath,screen_res):
 	global level_list
 	level_list = ['testbig002','test001']
 	
+	# Sound Data
+	global soundfx
+	soundfx = {}
+	soundfx['swish'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','swish.ogg'))
+	soundfx['button'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','31589__freqman__buttons01.ogg'))
+	soundfx['huh'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','huh.ogg'))
+	soundfx['siren'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','siren.ogg'))
+	soundfx['door'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','door.ogg'))
+	soundfx['break'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','boulders.ogg'))
+	
 	# pre-sets and controls
 	global controlmap
 	controlmap = {}
