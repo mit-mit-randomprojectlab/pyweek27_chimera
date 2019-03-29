@@ -133,7 +133,7 @@ def init(mainpath,screen_res):
 			tiles_coords.append((i*32, j*32, 32, 32))
 	
 	global water_animation_tiles
-	water_animation_tiles = [[70,71,72],[80,81,82],[90,91,92]]
+	water_animation_tiles = [[70,71,72,71],[80,81,82,81],[90,91,92,91]]
 	#water_animation_tiles = [70,71,72]
 	
 	global purpletile

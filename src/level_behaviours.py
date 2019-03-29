@@ -54,8 +54,8 @@ class Level_Behaviours(object):
 			self.parent.tiledlayers.guards[0].current_wp = 0
 			
 			# giving the guard a particular item that is in the map already
-			item = self.parent.tiledlayers.items[0]
-			self.parent.tiledlayers.guards[0].PickupItem(item)
+			#item = self.parent.tiledlayers.items[0]
+			#self.parent.tiledlayers.guards[0].PickupItem(item)
 		
 		
 	

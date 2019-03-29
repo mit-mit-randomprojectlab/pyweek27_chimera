@@ -325,6 +325,7 @@ class TiledLayers(object):
         	self.guards.append(guards.Guard(self.parent,tile))
         
         self.gui_tick = 0
+        self.watertile_ind = 0
         
         # retrieve list of tiles for static animations (water)
         self.water_tiles = []
@@ -366,26 +367,15 @@ class TiledLayers(object):
     		guard.UpdateMotion()
     	self.gui_tick += 1
     	if self.gui_tick % 10 == 0:
+    		self.watertile_ind = (self.watertile_ind+1) % 4
     		for tile in self.water_tiles[0]:
-    			current = self.tilelayer_bg[tile]
-    			next_ind = resources.water_animation_tiles[0].index(current)+1
-    			if next_ind == len(resources.water_animation_tiles[0]):
-    				next_ind = 0
-    			self.tilelayer_bg[tile] = resources.water_animation_tiles[0][next_ind]
+    			self.tilelayer_bg[tile] = resources.water_animation_tiles[0][self.watertile_ind]
     			self.UpdateTileBGAni(tile)
     		for tile in self.water_tiles[1]:
-    			current = self.tilelayer_bg[tile]
-    			next_ind = resources.water_animation_tiles[1].index(current)+1
-    			if next_ind == len(resources.water_animation_tiles[1]):
-    				next_ind = 0
-    			self.tilelayer_bg[tile] = resources.water_animation_tiles[1][next_ind]
+    			self.tilelayer_bg[tile] = resources.water_animation_tiles[1][self.watertile_ind]
     			self.UpdateTileBGAni(tile)
     		for tile in self.water_tiles[2]:
-    			current = self.tilelayer_bg[tile]
-    			next_ind = resources.water_animation_tiles[2].index(current)+1
-    			if next_ind == len(resources.water_animation_tiles[2]):
-    				next_ind = 0
-    			self.tilelayer_bg[tile] = resources.water_animation_tiles[2][next_ind]
+    			self.tilelayer_bg[tile] = resources.water_animation_tiles[2][self.watertile_ind]
     			self.UpdateTileBGAni(tile)
     			
     def UpdateTileBGAni(self, tile): # layer: 1: mid, 2: fore

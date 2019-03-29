@@ -199,16 +199,19 @@ class Guard(object):
 			
 			# check if can see any flying items
 			for item in self.parent.tiledlayers.items:
-				if item.flying or (item.id == 17 and item.active):
+				if item.flying or (item.id == 17 and item.active) or (item.id == 14 and item.active and self.item == None):
 					seen = self.CheckVisibility(item.x,item.y,self.maxrpatrol)
 					if seen:
 						self.mode = 'investigate'
 						self.guialert_to = 0
-						self.guiinvestigate_to = 60
 						self.target = item
 						self.path = []
-						self.wait_to = 60
-						resources.soundfx['huh'].play()
+						if item.id == 14 and not item.flying:
+							self.wait_to = 0
+						else:
+							self.guiinvestigate_to = 60
+							self.wait_to = 60
+							resources.soundfx['huh'].play()
 						break
 			
 			# check if can see any players
@@ -264,10 +267,13 @@ class Guard(object):
 			if len(self.path) > 0: # walking to item
 				(vx,vy) = self.IncrementPath(speed)
 			elif self.wait_to > 90 and dist < 32: # arriving at item
-				if self.target.id == 17:
+				if self.target.id == 17 and self.target.active:
 					self.target.Pickup()
 					self.item = self.target
-				self.wait_to = 90
+				if self.target.id == 14:
+					self.wait_to = 0
+				else:
+					self.wait_to = 90
 			if self.wait_to < 0 and dist < 32: # finished looking
 				if self.target.id == 17:
 					self.target.Pickup() # destroys cake
@@ -275,6 +281,11 @@ class Guard(object):
 					self.mode = 'eating'
 					self.wait_to = 150
 					resources.soundfx['eating'].play()
+				elif self.target.id == 14 and self.target.active:
+					self.target.Pickup()
+					self.item = self.target
+					self.mode = 'patrol'
+					self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 				else:
 					self.mode = 'patrol'
 					self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
