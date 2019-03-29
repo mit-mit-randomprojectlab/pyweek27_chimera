@@ -547,15 +547,18 @@ class Guard(object):
 				tile = 13
 			tilecoords = resources.itemsprites_coords[tile]
 			screen.blit(resources.itemsprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2)+8,self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20+8), area=tilecoords)
-		if self.guialert_to > 0:
-			screen.blit(resources.guisprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20-32), area=resources.guisprites_coords[0])
-		if self.guiinvestigate_to > 0:
-			screen.blit(resources.guisprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20-32), area=resources.guisprites_coords[1])
 		if len(self.path) > 0 and resources.debug_graphics:
 			for tile in self.path:
 				x = ts*(tile%msx) + int(ts/2)
 				y = ts*int(tile/msx) + int(ts/2)
 				pygame.draw.rect(screen, (255,128,0), pygame.Rect((x-(8/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),y-int(8/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(8,8)))
 	
+	def DrawGUI(self,screen):
+		imw = 32
+		imh = 48
+		if self.guialert_to > 0:
+			screen.blit(resources.guisprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20-32), area=resources.guisprites_coords[0])
+		if self.guiinvestigate_to > 0:
+			screen.blit(resources.guisprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20-32), area=resources.guisprites_coords[1])
 		
 			

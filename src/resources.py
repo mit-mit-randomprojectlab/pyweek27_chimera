@@ -28,6 +28,10 @@ def init(mainpath,screen_res):
 		for i in range(10):
 			tiles_coords.append((i*32, j*32, 32, 32))
 	
+	global water_animation_tiles
+	water_animation_tiles = [[70,71,72],[80,81,82],[90,91,92]]
+	#water_animation_tiles = [70,71,72]
+	
 	global purpletile
 	purpletile = pygame.Surface((32,32))
 	purpletile.fill((255,0,255))

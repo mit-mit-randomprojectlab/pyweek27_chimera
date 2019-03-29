@@ -326,6 +326,12 @@ class TiledLayers(object):
         
         self.gui_tick = 0
         
+        # retrieve list of tiles for static animations (water)
+        self.water_tiles = []
+        self.water_tiles.append([i for i, x in enumerate(self.tilelayer_bg) if x in resources.water_animation_tiles[0]])
+        self.water_tiles.append([i for i, x in enumerate(self.tilelayer_bg) if x in resources.water_animation_tiles[1]])
+        self.water_tiles.append([i for i, x in enumerate(self.tilelayer_bg) if x in resources.water_animation_tiles[2]])
+        
         # render tiled layers
         self.bglayer = pygame.Surface((self.tilesize*self.map_size[0],self.tilesize*self.map_size[1]))
         self.bglayer.fill((255,0,255))
@@ -359,6 +365,36 @@ class TiledLayers(object):
     	for guard in self.guards:
     		guard.UpdateMotion()
     	self.gui_tick += 1
+    	if self.gui_tick % 10 == 0:
+    		for tile in self.water_tiles[0]:
+    			current = self.tilelayer_bg[tile]
+    			next_ind = resources.water_animation_tiles[0].index(current)+1
+    			if next_ind == len(resources.water_animation_tiles[0]):
+    				next_ind = 0
+    			self.tilelayer_bg[tile] = resources.water_animation_tiles[0][next_ind]
+    			self.UpdateTileBGAni(tile)
+    		for tile in self.water_tiles[1]:
+    			current = self.tilelayer_bg[tile]
+    			next_ind = resources.water_animation_tiles[1].index(current)+1
+    			if next_ind == len(resources.water_animation_tiles[1]):
+    				next_ind = 0
+    			self.tilelayer_bg[tile] = resources.water_animation_tiles[1][next_ind]
+    			self.UpdateTileBGAni(tile)
+    		for tile in self.water_tiles[2]:
+    			current = self.tilelayer_bg[tile]
+    			next_ind = resources.water_animation_tiles[2].index(current)+1
+    			if next_ind == len(resources.water_animation_tiles[2]):
+    				next_ind = 0
+    			self.tilelayer_bg[tile] = resources.water_animation_tiles[2][next_ind]
+    			self.UpdateTileBGAni(tile)
+    			
+    def UpdateTileBGAni(self, tile): # layer: 1: mid, 2: fore
+    	coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]
+    	tilecoords = resources.tiles_coords[self.tilelayer_bg[tile]]
+    	self.bglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
+    	if self.tilelayer_mg[tile] > 0: # also re-render mid-ground into this layer
+    		tilecoords = resources.tiles_coords[self.tilelayer_mg[tile]]
+    		self.bglayer.blit(resources.tiles, (coords[0],coords[1]), area=tilecoords)
     
     def UpdateTileLayer(self, tile, layer, tileval): # layer: 1: mid, 2: fore
     	coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]

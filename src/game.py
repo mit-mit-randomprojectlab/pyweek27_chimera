@@ -226,6 +226,8 @@ class MainGame(GameScene):
 		for inmate in self.inmates:
 			inmate.Draw(screen)
 		self.tiledlayers.RenderFGLayer(screen)
+		for guard in self.tiledlayers.guards:
+			guard.DrawGUI(screen)
 		if resources.debug_graphics:
 			self.tiledlayers.RenderGoalTiles(screen)
 	
