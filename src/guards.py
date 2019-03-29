@@ -58,6 +58,9 @@ class Guard(object):
 		
 		self.was_stuck = False
 		self.stuck_to = 0
+		
+		self.guialert_to = 0
+		self.guiinvestigate_to = 0
 	
 	def PickupItem(self,item):
 		self.item = item
@@ -177,7 +180,8 @@ class Guard(object):
 			vx = 0
 			vy = 0
 		elif self.mode == 'patrol':
-			
+			self.guialert_to = 0
+			self.guiinvestigate_to = 0
 			speed = self.speeda
 			speed_d = self.speed_da
 			anispeed2 = self.anispeed2a
@@ -199,6 +203,8 @@ class Guard(object):
 					seen = self.CheckVisibility(item.x,item.y,self.maxrpatrol)
 					if seen:
 						self.mode = 'investigate'
+						self.guialert_to = 0
+						self.guiinvestigate_to = 60
 						self.target = item
 						self.path = []
 						self.wait_to = 60
@@ -214,9 +220,11 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					self.guialert_to = 90
+					self.guiinvestigate_to = 0
 					if self.siren_to == 0:
 						self.siren_to = 90
-						resources.soundfx['siren'].play()
+						resources.soundfx['whistle'].play()
 					break
 		
 		elif self.mode == 'investigate':
@@ -236,9 +244,11 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					self.guialert_to = 90
+					self.guiinvestigate_to = 0
 					if self.siren_to == 0:
 						self.siren_to = 90
-						resources.soundfx['siren'].play()
+						resources.soundfx['whistle'].play()
 					break
 			
 			self.wait_to -= 1
@@ -287,6 +297,8 @@ class Guard(object):
 			if dist > self.maxrpatrol:
 				self.mode = 'wait'
 				self.wait_to = 60
+				self.guialert_to = 0
+				self.guiinvestigate_to = 60
 				vx = 0
 				vy = 0
 			else:
@@ -315,6 +327,8 @@ class Guard(object):
 							self.path = []
 							self.last_seen = [self.target.x,self.target.y]
 							self.tlastseen = 0
+							self.guialert_to = 90
+							self.guiinvestigate_to = 0
 							vx = 0
 							vy = 0
 							break
@@ -335,6 +349,8 @@ class Guard(object):
 								self.mode = 'wait'
 								self.wait_to = 60
 								self.path = []
+								self.guialert_to = 0
+								self.guiinvestigate_to = 60
 								vx = 0
 								vy = 0
 							else:
@@ -346,6 +362,8 @@ class Guard(object):
 									self.mode = 'wait'
 									self.wait_to = 60
 									self.path = []
+									self.guialert_to = 0
+									self.guiinvestigate_to = 60
 								vx = 0
 								vy = 0
 		
@@ -363,9 +381,11 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					self.guialert_to = 90
+					self.guiinvestigate_to = 0
 					if self.siren_to == 0:
 						self.siren_to = 90
-						resources.soundfx['siren'].play()
+						resources.soundfx['whistle'].play()
 					break
 			
 			self.wait_to -= 1
@@ -374,7 +394,8 @@ class Guard(object):
 				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 		
 		elif self.mode == 'eating':
-			
+			self.guialert_to = 0
+			self.guiinvestigate_to = 0
 			vx = 0
 			vy = 0
 			
@@ -387,9 +408,11 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
+					self.guialert_to = 90
+					self.guiinvestigate_to = 0
 					if self.siren_to == 0:
 						self.siren_to = 90
-						resources.soundfx['siren'].play()
+						resources.soundfx['whistle'].play()
 					break
 			
 			self.wait_to -= 1
@@ -400,6 +423,8 @@ class Guard(object):
 		elif self.mode == 'holdup':
 			vx = 0
 			vy = 0
+			self.guialert_to = 10
+			self.guiinvestigate_to = 0
 			holdup = self.SeeSword(vx,vy,0)
 			if not holdup: # no longer being held up
 				self.mode = 'patrol'
@@ -409,13 +434,15 @@ class Guard(object):
 			holdup = self.SeeSword(vx,vy,speed)
 		
 		# Update whether seen
+		"""
 		for inmate in self.parent.inmates:
 			seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrpatrol)
 			if seen:
 				inmate.seen = True
 			else:
 				inmate.seen = False
-			
+		"""
+		
 		lastmoving = self.moving
 		if abs(vx) > 0 or abs(vy) > 0:
 			self.moving = True
@@ -476,8 +503,13 @@ class Guard(object):
 			self.stuck_to = 30
 			#print('stuck!')
 		
+		# increment things for responses
 		if self.siren_to > 0:
 			self.siren_to -= 1
+		if self.guialert_to > 0:
+			self.guialert_to -= 1
+		if self.guiinvestigate_to > 0:
+			self.guiinvestigate_to -= 1
 		
 		# Check if need to inform tilemap object layer of updates
 		final_tile = self.parent.tiledlayers.map_size[0]*int(self.y/tsize)+int(self.x/tsize)
@@ -501,8 +533,8 @@ class Guard(object):
 		imh = 48
 		boxw = 24
 		boxh = 24
-		if resources.debug_graphics:
-			pygame.draw.rect(screen, (255,255,0), pygame.Rect((self.x-(boxw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(boxh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(boxw,boxh)))
+		#if resources.debug_graphics:
+		#	pygame.draw.rect(screen, (255,255,0), pygame.Rect((self.x-(boxw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(boxh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)),(boxw,boxh)))
 		screen.blit(resources.charsprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20), area=tilecoords)
 		if not self.item == None:
 			if self.item.id <= 5:
@@ -515,6 +547,10 @@ class Guard(object):
 				tile = 13
 			tilecoords = resources.itemsprites_coords[tile]
 			screen.blit(resources.itemsprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2)+8,self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20+8), area=tilecoords)
+		if self.guialert_to > 0:
+			screen.blit(resources.guisprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20-32), area=resources.guisprites_coords[0])
+		if self.guiinvestigate_to > 0:
+			screen.blit(resources.guisprites, (self.x-int(imw/2)-self.parent.camera.x+int(self.parent.camera.w_view/2),self.y-int(imh/2)-self.parent.camera.y+int(self.parent.camera.h_view/2)-20-32), area=resources.guisprites_coords[1])
 		if len(self.path) > 0 and resources.debug_graphics:
 			for tile in self.path:
 				x = ts*(tile%msx) + int(ts/2)

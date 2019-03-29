@@ -324,6 +324,8 @@ class TiledLayers(object):
         for tile in guard_tiles:
         	self.guards.append(guards.Guard(self.parent,tile))
         
+        self.gui_tick = 0
+        
         # render tiled layers
         self.bglayer = pygame.Surface((self.tilesize*self.map_size[0],self.tilesize*self.map_size[1]))
         self.bglayer.fill((255,0,255))
@@ -356,6 +358,7 @@ class TiledLayers(object):
     		item.Update()
     	for guard in self.guards:
     		guard.UpdateMotion()
+    	self.gui_tick += 1
     
     def UpdateTileLayer(self, tile, layer, tileval): # layer: 1: mid, 2: fore
     	coords = [(tile%self.map_size[0])*self.tilesize, int(tile/self.map_size[0])*self.tilesize]
@@ -380,9 +383,9 @@ class TiledLayers(object):
     
     def RenderGoalTiles(self, screen):
         for tile in self.finish_tiles:
-            x = self.tilesize*(tile%self.map_size[0])+4
-            y = self.tilesize*int(tile/self.map_size[0])+4
-            pygame.draw.rect(screen, (0,255,0), pygame.Rect((x-self.parent.camera.x+int(self.parent.camera.w_view/2),y-self.parent.camera.y+int(self.parent.camera.h_view/2)),(24,24)))
+            x = self.tilesize*(tile%self.map_size[0])
+            y = self.tilesize*int(tile/self.map_size[0]) - 16 - 4*int((self.gui_tick % 30)/15)
+            screen.blit(resources.guisprites, (x-self.parent.camera.x+int(self.parent.camera.w_view/2),y-self.parent.camera.y+int(self.parent.camera.h_view/2)), area=resources.guisprites_coords[2])
     
     def InsertObj(self,tileind,obj):
         self.objectlayer[tileind].append(obj)

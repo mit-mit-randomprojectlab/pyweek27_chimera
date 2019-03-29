@@ -54,6 +54,16 @@ def init(mainpath,screen_res):
 		for i in range(6):
 			itemsprites_coords.append((i*32, j*32, 32, 32))
 	
+	global guisprites
+	global guisprites_coords
+	
+	guisprites = pygame.image.load(os.path.join(mainpath,'data','gfx','gui_2x.png')).convert()
+	guisprites.set_colorkey((255,0,255))
+	guisprites_coords = []
+	for j in range(1):
+		for i in range(3):
+			guisprites_coords.append((i*32, j*32, 32, 32))
+	
 	# Load level data
 	global levels
 	levels = {}
@@ -69,11 +79,12 @@ def init(mainpath,screen_res):
 	global soundfx
 	soundfx = {}
 	soundfx['swish'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','swish.ogg'))
-	soundfx['drop'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','swish.ogg')) # TODO: source
+	soundfx['drop'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','drop.ogg')) # TODO: source
 	soundfx['eating'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','eating.ogg'))
 	soundfx['button'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','31589__freqman__buttons01.ogg'))
 	soundfx['huh'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','huh.ogg'))
 	soundfx['siren'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','siren.ogg'))
+	soundfx['whistle'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','whistle.ogg'))
 	soundfx['door'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','door.ogg'))
 	soundfx['break'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','boulders.ogg'))
 	

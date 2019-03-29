@@ -36,14 +36,14 @@ class FadeInOut(object):
 				self.finished_in = True
 			else:
 				#self.alpha = 255*(1.0-(self.ticks_elapsed/float(self.ticks)))
-				self.alpha = 255*(1.0-((5*int(self.ticks_elapsed/5))/float(self.ticks)))
+				self.alpha = 255*(1.0-((1*int(self.ticks_elapsed/1))/float(self.ticks)))
 		elif self.direction == 'out' and not self.finished_out:
 			self.ticks_elapsed += 1
 			if self.ticks_elapsed > self.ticks:
 				self.finished_out = True
 			else:
 				#self.alpha = 255*(self.ticks_elapsed/float(self.ticks))
-				self.alpha = 255*((5*int(self.ticks_elapsed/5))/float(self.ticks))
+				self.alpha = 255*((1*int(self.ticks_elapsed/1))/float(self.ticks))
 				if self.musicfade:
 					pygame.mixer.music.set_volume(0.5*(1.0 - (self.ticks_elapsed/float(self.ticks))))
 	
