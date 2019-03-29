@@ -230,6 +230,7 @@ class MainGame(GameScene):
 			guard.DrawGUI(screen)
 		if resources.debug_graphics:
 			self.tiledlayers.RenderGoalTiles(screen)
+		#screen.blit(resources.text_surfs['test001'], (0,self.window_size[1]/2-resources.text_surfs['test001'].get_height()/2))
 	
 	def on_draw(self, screen):
 		self.draw(screen)

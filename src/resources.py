@@ -12,10 +12,89 @@ from pygame.locals import *
 
 import level_data
 
+class GameFont(object):
+    def __init__(self,mainpath,path,size):
+        self.fontim = pygame.image.load(os.path.join(mainpath,'data','gfx',path)).convert()
+        self.fontim.set_colorkey((255,0,255))
+        
+        #keys = list('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ? = abcdefghijklmnopqrstuvwxyz+,-.!"#$%&`():')
+        keys = list('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ.,_-+dsp!"`#&()o?$:;<>{}=v^[]p    ')
+        self.rects = {}
+        for i in range(7):
+            for j in range(10):
+                k = keys[i*10+j]
+                self.rects[k] = [j*size[0],i*size[1],size[0],size[1]]
+    
+    def RenderSentence(self, sentence, maxx, maxy, align='left'):
+        sentsurf = pygame.Surface((maxx,maxy))
+        sentsurf.fill((255,0,255))
+        sentsurf.convert()
+        sentsurf.set_colorkey((255,0,255))
+        textheight = self.rects['A'][3]
+        maxlines = maxy/textheight
+        linedist = 0
+        line = 0
+        offsets = []
+        if align in ['centre','vcentre']:
+            for word in sentence.split(' '):
+                letters = word.split()[0]+' '
+                wordsize = sum([self.rects[let][2] for let in letters])
+                if wordsize > maxx:
+                    return False
+                if (linedist+wordsize) >= maxx:
+                    line += 1
+                    offsets.append((maxx-linedist)/2)
+                    linedist = 0
+                    if line == maxlines:
+                        return False
+                for let in letters:
+                    linedist += self.rects[let][2]
+                if word[-1] == '\n':
+                    line += 1
+                    offsets.append((maxx-linedist)/2)
+                    linedist = 0
+            offsets.append((maxx-linedist)/2)
+            voffset = maxy/2 - ((line+1)*textheight)/2
+            linedist = 0
+            line = 0
+        for word in sentence.split(' '):
+            letters = word.split()[0]+' '
+            wordsize = sum([self.rects[let][2] for let in letters])
+            if wordsize > maxx:
+                return False
+            if (linedist+wordsize) >= maxx:
+                line += 1
+                linedist = 0
+                if line == maxlines:
+                    return False
+            for let in letters:
+                if align == 'centre':
+                    sentsurf.blit(self.fontim,(linedist+offsets[line],textheight*line),area=self.rects[let])
+                elif align == 'vcentre':
+                    sentsurf.blit(self.fontim,(linedist+offsets[line],textheight*line+voffset),area=self.rects[let])
+                else:
+                    sentsurf.blit(self.fontim,(linedist,textheight*line),area=self.rects[let])
+                linedist += self.rects[let][2]
+            if word[-1] == '\n':
+                line += 1
+                linedist = 0
+        return sentsurf
+
 def init(mainpath,screen_res):
 	
 	global debug_graphics
 	debug_graphics = True
+	
+	# Fonts and text
+	gamefont = GameFont(mainpath,'font_2x.png',(18,26))
+	gamefontsmall = GameFont(mainpath,'font_1x.png',(9,13))
+	
+	# In game text surfaces (pre-rendered)
+	global text_surfs
+	
+	text_surfs = {}
+	#text_surfs['test001'] = gamefont.RenderSentence('THIS IS A TEST SENTENCE, LETS SEE HOW IT LOOKS', 800, 52, align='vcentre')
+	text_surfs['test001'] = gamefontsmall.RenderSentence('THIS IS A TEST SENTENCE, LETS SEE HOW IT LOOKS', 800, 13, align='vcentre')
 	
 	# Load tileset image, set tile coords
 	global tiles
