@@ -30,7 +30,7 @@ class Level_Behaviours(object):
 	
 	# on_levelstart: gets called when level is first loaded
 	def on_levelstart(self,level_id):
-		pass
+		
 		# examples:
 		# You can access static level data loaded in from json
 		# resources.levels[level_id].data['tilemap']['layer_b'] etc.
@@ -47,16 +47,16 @@ class Level_Behaviours(object):
 		#
 		
 		# Setting patrol waypoints for guards: set here at on_levelstart
-		#self.parent.tiledlayers.guards[0].mode = 'patrol'
-		#self.parent.tiledlayers.guards[0].waypoints = [141,341,528,391,-1]
-		#self.parent.tiledlayers.guards[0].current_wp = 0
+		if self.parent.tiledlayers.level_id == 'testbig003':
+			self.parent.tiledlayers.guards[0].waypoints = [141,341,528,391]
+			self.parent.tiledlayers.guards[0].current_wp = 0
 	
 	def on_update(self):
 		
 		# this method gets called every game frame (don't make it do super slow stuff :) )
 		# you can access the tilemap in the same way as in "on_startlevel"
 		
-		# example thing:
+		# example thing: sets up a door cotrol and assigns initial waypoint to a guard
 		if self.parent.tiledlayers.level_id == 'testbig003':
 			self.DoorTest()
 

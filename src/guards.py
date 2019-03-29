@@ -41,11 +41,8 @@ class Guard(object):
 		
 		self.path = []
 		self.mode = 'patrol'
-		self.waypoints = [141,341,528,391,-1]
+		self.waypoints = []
 		self.current_wp = 0
-		#self.mode = 'none'
-		#self.waypoints = []
-		#self.current_wp = -1
 		
 		self.maxrpatrol = 32*10
 		self.maxrinvestigate = 32*3
@@ -170,9 +167,6 @@ class Guard(object):
 				if self.current_wp >= 0:
 					self.current_wp += 1
 					if self.current_wp == len(self.waypoints):
-						self.waypoints = []
-						self.current_wp = -1
-					if self.waypoints[self.current_wp] == -1: # cue to go back and repeat waypoints
 						self.current_wp = 0
 					self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 			
