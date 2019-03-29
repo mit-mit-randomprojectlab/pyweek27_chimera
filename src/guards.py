@@ -47,6 +47,7 @@ class Guard(object):
 		self.maxrpatrol = 32*10
 		self.maxrinvestigate = 32*3
 		self.maxrchase = 32*5
+		self.maxrsword = 32*3
 		
 		self.wait_to = -1
 		self.target = None
@@ -55,6 +56,10 @@ class Guard(object):
 		
 		self.was_stuck = False
 		self.stuck_to = 0
+	
+	def PickupItem(self,item):
+		self.item = item
+		item.Pickup()
 	
 	def CheckVisibility(self,xtarget,ytarget,maxr):
 		msx = self.parent.tiledlayers.map_size[0]
@@ -136,6 +141,19 @@ class Guard(object):
 			vx = 0
 			vy = 0
 		return (vx,vy)
+	
+	def SeeSword(self,vx,vy,speed):
+		for inmate in self.parent.inmates:
+			seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrsword)
+			if seen and not inmate.item == None: # carrying something
+				if inmate.item.id == 14: # a sword
+					self.mode = 'holdup'
+					if not self.item == None:
+						self.item.Throw(self.x,self.y,speed*vx,speed*vy)
+						resources.soundfx['drop'].play()
+						self.item = None
+					return True
+		return False
 	
 	def UpdateMotion(self):
 		
@@ -333,6 +351,17 @@ class Guard(object):
 				self.mode = 'patrol'
 				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 		
+		elif self.mode == 'holdup':
+			vx = 0
+			vy = 0
+			holdup = self.SeeSword(vx,vy,0)
+			if not holdup: # no longer being held up
+				self.mode = 'patrol'
+		
+		# check for hold up
+		if not self.mode == 'holdup':
+			holdup = self.SeeSword(vx,vy,speed)
+		
 		# Update whether seen
 		for inmate in self.parent.inmates:
 			seen = self.CheckVisibility(inmate.x,inmate.y,self.maxrpatrol)
@@ -416,6 +445,8 @@ class Guard(object):
 				tile += 4
 		elif not self.item == None:
 			tile += 2
+		if self.mode == 'holdup':
+			tile = 6*12 + 2 + self.gait
 		tilecoords = resources.charsprites_coords[tile]
 		imw = 32
 		imh = 48

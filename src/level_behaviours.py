@@ -46,10 +46,18 @@ class Level_Behaviours(object):
 		# t.UpdateTileLayer(tile, layer, tileval) # layer: 1: mid, 2: fore: change value in displayed tiles
 		#
 		
-		# Setting patrol waypoints for guards: set here at on_levelstart
+		# some example initial setup: set here at on_levelstart
 		if self.parent.tiledlayers.level_id == 'testbig003':
+			
+			# Setting patrol waypoints for guards
 			self.parent.tiledlayers.guards[0].waypoints = [141,341,528,391]
 			self.parent.tiledlayers.guards[0].current_wp = 0
+			
+			# giving the guard a particular item that is in the map already
+			item = self.parent.tiledlayers.items[0]
+			self.parent.tiledlayers.guards[0].PickupItem(item)
+		
+		
 	
 	def on_update(self):
 		
