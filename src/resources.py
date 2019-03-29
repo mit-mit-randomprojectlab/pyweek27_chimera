@@ -70,6 +70,7 @@ def init(mainpath,screen_res):
 	soundfx = {}
 	soundfx['swish'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','swish.ogg'))
 	soundfx['drop'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','swish.ogg')) # TODO: source
+	soundfx['eating'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','eating.ogg'))
 	soundfx['button'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','31589__freqman__buttons01.ogg'))
 	soundfx['huh'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','huh.ogg'))
 	soundfx['siren'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','siren.ogg'))

@@ -48,11 +48,13 @@ class Guard(object):
 		self.maxrinvestigate = 32*3
 		self.maxrchase = 32*5
 		self.maxrsword = 32*3
+		self.maxreating = 32*1
 		
 		self.wait_to = -1
 		self.target = None
 		self.last_seen = [-1,-1]
 		self.tlastseen = 0
+		self.siren_to = 0
 		
 		self.was_stuck = False
 		self.stuck_to = 0
@@ -193,7 +195,7 @@ class Guard(object):
 			
 			# check if can see any flying items
 			for item in self.parent.tiledlayers.items:
-				if item.flying:
+				if item.flying or (item.id == 17 and item.active):
 					seen = self.CheckVisibility(item.x,item.y,self.maxrpatrol)
 					if seen:
 						self.mode = 'investigate'
@@ -212,7 +214,9 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
-					resources.soundfx['siren'].play()
+					if self.siren_to == 0:
+						self.siren_to = 90
+						resources.soundfx['siren'].play()
 					break
 		
 		elif self.mode == 'investigate':
@@ -232,22 +236,38 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
-					resources.soundfx['siren'].play()
+					if self.siren_to == 0:
+						self.siren_to = 90
+						resources.soundfx['siren'].play()
 					break
 			
 			self.wait_to -= 1
 			dist = sqrt(pow(self.target.x-self.x,2)+pow(self.target.y-self.y,2))
-			if self.wait_to < 0 and dist > 32:
+			if self.wait_to < 0 and dist > 32: # plan to item
 				target_tile = msx*int(self.target.y/tsize)+int(self.target.x/tsize)
 				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, target_tile)
 				self.wait_to = 5000
-			if len(self.path) > 0:
+				if not self.item == None:
+					self.item.Throw(self.x,self.y,speed*vx,speed*vy)
+					resources.soundfx['drop'].play()
+					self.item = None
+			if len(self.path) > 0: # walking to item
 				(vx,vy) = self.IncrementPath(speed)
-			elif self.wait_to > 90 and dist < 32:
+			elif self.wait_to > 90 and dist < 32: # arriving at item
+				if self.target.id == 17:
+					self.target.Pickup()
+					self.item = self.target
 				self.wait_to = 90
-			if self.wait_to < 0 and dist < 32:
-				self.mode = 'patrol'
-				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
+			if self.wait_to < 0 and dist < 32: # finished looking
+				if self.target.id == 17:
+					self.target.Pickup() # destroys cake
+					self.item = None
+					self.mode = 'eating'
+					self.wait_to = 150
+					resources.soundfx['eating'].play()
+				else:
+					self.mode = 'patrol'
+					self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 			
 		elif self.mode == 'chase':
 			
@@ -343,7 +363,33 @@ class Guard(object):
 					self.path = []
 					self.last_seen = [self.target.x,self.target.y]
 					self.tlastseen = 0
-					resources.soundfx['siren'].play()
+					if self.siren_to == 0:
+						self.siren_to = 90
+						resources.soundfx['siren'].play()
+					break
+			
+			self.wait_to -= 1
+			if self.wait_to < 0:
+				self.mode = 'patrol'
+				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
+		
+		elif self.mode == 'eating':
+			
+			vx = 0
+			vy = 0
+			
+			# check if can see any players
+			for inmate in self.parent.inmates:
+				seen = self.CheckVisibility(inmate.x,inmate.y,self.maxreating)
+				if seen:
+					self.mode = 'chase'
+					self.target = inmate
+					self.path = []
+					self.last_seen = [self.target.x,self.target.y]
+					self.tlastseen = 0
+					if self.siren_to == 0:
+						self.siren_to = 90
+						resources.soundfx['siren'].play()
 					break
 			
 			self.wait_to -= 1
@@ -429,6 +475,9 @@ class Guard(object):
 			self.was_stuck = True
 			self.stuck_to = 30
 			#print('stuck!')
+		
+		if self.siren_to > 0:
+			self.siren_to -= 1
 		
 		# Check if need to inform tilemap object layer of updates
 		final_tile = self.parent.tiledlayers.map_size[0]*int(self.y/tsize)+int(self.x/tsize)
