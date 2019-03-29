@@ -212,7 +212,9 @@ class MainGame(GameScene):
 	def on_event(self, events):
 		for event in events:
 			if event.type == KEYDOWN and event.key == K_ESCAPE:
-				self.director.change_scene(None, [])
+				self.draw(self.h_pausescene.background)
+				self.director.change_scene('pausescene', [self.tiledlayers.level_id])
+				#self.director.change_scene(None, [])
 			elif event.type == KEYDOWN or event.type == KEYUP:
 				self.control.ProcessKeyEvent(event)
 	
@@ -239,3 +241,152 @@ class MainGame(GameScene):
 		else:
 			self.background.set_alpha(self.fade.alpha)
 		screen.blit(self.background, (0, 0))
+
+class MenuButton(object):
+	def __init__(self,pos,surf_on,surf_off,go_func=None):
+		self.pos = pos
+		self.on = False
+		self.surf_on = surf_on
+		self.surf_off = surf_off
+		self.go_func = go_func
+	
+	def Draw(self, screen):
+		if self.on:
+			screen.blit(self.surf_on, self.pos)
+		else:
+			screen.blit(self.surf_off, self.pos)
+
+class MenuList(object):
+	def __init__(self,buttons,select_ind,controlmap):
+		self.buttons = buttons
+		self.select_ind = select_ind
+		self.buttons[self.select_ind].on = True
+		self.CM = controlmap
+	
+	def ProcessKeyEvent(self,event):
+		if event.type == KEYDOWN:
+			if event.key == self.CM["U"]:
+				self.buttons[self.select_ind].on = False
+				self.select_ind = (self.select_ind-1) % len(self.buttons)
+				self.buttons[self.select_ind].on = True
+			elif event.key == self.CM["D"]:
+				self.buttons[self.select_ind].on = False
+				self.select_ind = (self.select_ind+1) % len(self.buttons)
+				self.buttons[self.select_ind].on = True
+			if event.key == self.CM["action"] or event.key == K_RETURN:
+				self.buttons[self.select_ind].go_func()
+	
+	def Draw(self, screen):
+		for b in self.buttons:
+			b.Draw(screen)
+
+class PauseScreen(GameScene):
+	def __init__(self, director, window_size):
+		super(PauseScreen, self).__init__(director)
+		self.window_size = window_size
+		
+		# Background
+		self.background = pygame.Surface(window_size)
+		self.background.fill((0,0,0))
+		self.background.convert()
+		
+		self.background2 = pygame.Surface((700,600-32))
+		self.background2.fill((0,0,0))
+		self.background2.convert()
+		self.background2.set_alpha(200)
+	
+	def resume_game_now(self):
+		self.director.change_scene('maingame', [False,-1])
+	
+	def reset_game_now(self):
+		self.director.change_scene('maingame', [True,self.from_level])
+	
+	def help_game_now(self):
+		self.help = True
+	
+	def DrawHelp(self,screen):
+		screen.blit(self.background2, (50, 16))
+		offsetx = 200
+		offsety = 50
+		screen.blit(resources.text_surfs['help001'], (offsetx,offsety-16))
+		screen.blit(resources.text_surfs['help002'], (offsetx,offsety+48))
+		screen.blit(resources.text_surfs['help003'], (offsetx,offsety+2*48))
+		screen.blit(resources.text_surfs['help004'], (offsetx,offsety+3*48))
+		screen.blit(resources.text_surfs['help005'], (offsetx,offsety+4*48))
+		screen.blit(resources.text_surfs['help006'], (offsetx,offsety+5*48))
+		screen.blit(resources.text_surfs['help007'], (offsetx,offsety+6*48))
+		screen.blit(resources.text_surfs['help008'], (offsetx,offsety+7*48))
+		screen.blit(resources.text_surfs['help009'], (offsetx,offsety+8*48))
+		screen.blit(resources.text_surfs['help010'], (offsetx,offsety+9*48))
+		screen.blit(resources.text_surfs['help011'], (offsetx,offsety+10*48))
+		
+		offsetx2 = 100
+		screen.blit(resources.guisprites, (offsetx2,offsety-16), area=resources.guisprites_coords[2])
+		screen.blit(resources.charsprites, (offsetx2,offsety+48-32), area=resources.charsprites_coords[12*6])
+		screen.blit(resources.tiles, (offsetx2,offsety+2*48-24), area=(0,32*5,32,64))
+		screen.blit(resources.tiles, (offsetx2,offsety+3*48), area=resources.tiles_coords[8])
+		screen.blit(resources.tiles, (offsetx2,offsety+4*48), area=resources.tiles_coords[22])
+		screen.blit(resources.tiles, (offsetx2,offsety+5*48-16), area=(6*32,0,32,64))
+		screen.blit(resources.itemsprites, (offsetx2,offsety+6*48), area=resources.itemsprites_coords[0])
+		screen.blit(resources.itemsprites, (offsetx2,offsety+7*48), area=resources.itemsprites_coords[16])
+		screen.blit(resources.itemsprites, (offsetx2,offsety+8*48), area=resources.itemsprites_coords[13])
+		screen.blit(resources.itemsprites, (offsetx2,offsety+9*48), area=resources.itemsprites_coords[12])
+		screen.blit(resources.itemsprites, (offsetx2,offsety+10*48), area=resources.itemsprites_coords[17])
+
+	
+	def quit_game_now(self):
+		#self.h_maingame.current_music = 'none'
+		#self.director.change_scene('titlescene', [])
+		self.director.change_scene(None, [])
+	
+	def on_switchto(self, switchtoargs):
+		
+		self.from_level = switchtoargs[0]
+		self.help = False
+		
+		# Setup background
+		backfade = pygame.Surface(self.background.get_size())
+		backfade.fill((0,0,0))
+		backfade.convert()
+		backfade.set_alpha(128)
+		self.background.blit(backfade, (0,0))
+		
+		# top-level menu buttons
+		self.pos_v = 200
+		self.button_resume = MenuButton((0,self.pos_v),resources.text_surfs['resume_on'],resources.text_surfs['resume_off'],self.resume_game_now)
+		self.button_reset = MenuButton((0,self.pos_v+48),resources.text_surfs['reset_on'],resources.text_surfs['reset_off'],self.reset_game_now)
+		self.button_help = MenuButton((0,self.pos_v+96),resources.text_surfs['help_on'],resources.text_surfs['help_off'],self.help_game_now)
+		self.button_quit = MenuButton((0,self.pos_v+144),resources.text_surfs['quit_on'],resources.text_surfs['quit_off'],self.quit_game_now)
+		self.buttonlist = [self.button_resume,self.button_reset,self.button_help,self.button_quit]
+		self.topmenus = MenuList(self.buttonlist,0,resources.controlmap)
+		
+		# reset menu
+		self.topmenus.select_ind = 0
+		
+	def on_update(self):
+		pass
+	
+	def on_event(self, events):
+		for event in events:
+			if event.type == KEYDOWN and event.key == K_ESCAPE:
+				self.director.change_scene('maingame', [False,-1])
+			if event.type == KEYDOWN and event.key == K_r: # bind "r" to reset level hotkey
+				self.director.change_scene('maingame', [True,self.from_level])
+			if event.type == KEYDOWN:
+				if self.help:
+					self.help = False
+				else:
+					self.topmenus.ProcessKeyEvent(event)
+	
+	def on_draw(self, screen):
+		screen.blit(self.background, (0,0))
+		if self.help:
+			self.DrawHelp(screen)
+		else:
+			self.topmenus.Draw(screen)
+			offset = 450
+			screen.blit(resources.text_surfs['controls001'], (0,offset))
+			screen.blit(resources.text_surfs['controls002'], (0,offset+16))
+			screen.blit(resources.text_surfs['controls003'], (0,offset+32))
+			screen.blit(resources.text_surfs['controls004'], (0,offset+48))
+

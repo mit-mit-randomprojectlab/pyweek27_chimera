@@ -34,6 +34,11 @@ def main(mainpath):
     maingame = game.MainGame(dir, screen_res)
     dir.addscene('maingame', maingame)
     
+    pausescene = game.PauseScreen(dir, screen_res)
+    dir.addscene('pausescene', pausescene)
+    maingame.h_pausescene = pausescene
+    pausescene.h_maingame = maingame
+    
     # start up director
     dir.change_scene('maingame', [True, 'testbig003'])
     dir.loop()

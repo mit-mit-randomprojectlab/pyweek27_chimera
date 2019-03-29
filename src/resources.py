@@ -18,7 +18,7 @@ class GameFont(object):
         self.fontim.set_colorkey((255,0,255))
         
         #keys = list('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ? = abcdefghijklmnopqrstuvwxyz+,-.!"#$%&`():')
-        keys = list('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ.,_-+dsp!"`#&()o?$:;<>{}=v^[]p    ')
+        keys = list('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ.,_-+d/p!"`#&()o?$:;<>{}=v^[]p    ')
         self.rects = {}
         for i in range(7):
             for j in range(10):
@@ -88,13 +88,38 @@ def init(mainpath,screen_res):
 	# Fonts and text
 	gamefont = GameFont(mainpath,'font_2x.png',(18,26))
 	gamefontsmall = GameFont(mainpath,'font_1x.png',(9,13))
+	gamefontgrey = GameFont(mainpath,'fontgrey_2x.png',(18,26))
+	gamefontgreysmall = GameFont(mainpath,'fontgrey_1x.png',(9,13))
 	
 	# In game text surfaces (pre-rendered)
 	global text_surfs
 	
 	text_surfs = {}
-	#text_surfs['test001'] = gamefont.RenderSentence('THIS IS A TEST SENTENCE, LETS SEE HOW IT LOOKS', 800, 52, align='vcentre')
-	text_surfs['test001'] = gamefontsmall.RenderSentence('THIS IS A TEST SENTENCE, LETS SEE HOW IT LOOKS', 800, 13, align='vcentre')
+	text_surfs['resume_on'] = gamefont.RenderSentence('RESUME GAME', 800, 26, align='vcentre')
+	text_surfs['resume_off'] = gamefontgrey.RenderSentence('RESUME GAME', 800, 26, align='vcentre')
+	text_surfs['reset_on'] = gamefont.RenderSentence('RESET GAME (R)', 800, 26, align='vcentre')
+	text_surfs['reset_off'] = gamefontgrey.RenderSentence('RESET GAME (R)', 800, 26, align='vcentre')
+	text_surfs['help_on'] = gamefont.RenderSentence('HELP/TIPS', 800, 26, align='vcentre')
+	text_surfs['help_off'] = gamefontgrey.RenderSentence('HELP/TIPS', 800, 26, align='vcentre')
+	text_surfs['quit_on'] = gamefont.RenderSentence('QUIT GAME', 800, 26, align='vcentre')
+	text_surfs['quit_off'] = gamefontgrey.RenderSentence('QUIT GAME', 800, 26, align='vcentre')
+	
+	text_surfs['controls001'] = gamefontgreysmall.RenderSentence('CONTROLS:', 800, 13, align='vcentre')
+	text_surfs['controls002'] = gamefontgreysmall.RenderSentence('ARROW KEYS: MOVE PLAYER', 800, 13, align='vcentre')
+	text_surfs['controls003'] = gamefontgreysmall.RenderSentence('TAB: SWITCH BETWEEN PLAYERS', 800, 13, align='vcentre')
+	text_surfs['controls004'] = gamefontgreysmall.RenderSentence('SPACE: PICKUP/USE/DROP/THROW ITEM', 800, 13, align='vcentre')
+	
+	text_surfs['help001'] = gamefontsmall.RenderSentence('GUIDE YOUR CREW, INMATE BY INMATE, TO ESCAPE THE PRISON. GET ALL PLAYERS TO THESE EXIT TILES. LEAVE NO MAN BEHIND!', 400, 39)
+	text_surfs['help002'] = gamefontsmall.RenderSentence('GUARDS: THESE GUYS ARE EVERYWHERE. IF THEY CATCH ONE OF YOUR TEAM, IT`S BACK TO THE SLAMMER', 500, 26)
+	text_surfs['help003'] = gamefontsmall.RenderSentence('DOORS: YOU`LL NEED COLOUR-CODED KEYS FOR THESE DOORS', 400, 26)
+	text_surfs['help004'] = gamefontsmall.RenderSentence('BUTTONS: THESE CAN ACTIVATE DOORS', 400, 26)
+	text_surfs['help005'] = gamefontsmall.RenderSentence('WEAK WALLS: IF YOU HAD A HAMMER, YOU COULD PROBABLY BREAK THESE DOWN', 400, 26)
+	text_surfs['help006'] = gamefontsmall.RenderSentence('FENCE: GUARDS CAN`T SEE YOU BEHIND THIS (PROBABLY). YOU COULD THROW AN ITEM OVER IT (LIKE A KEY)', 500, 26)
+	text_surfs['help007'] = gamefontsmall.RenderSentence('KEY: YOU`LL NEED THIS TO GET THROUGH SOME DOORS (PRESS SPACE): MAKE SURE TO MATCH THE COLOUR', 500, 26)
+	text_surfs['help008'] = gamefontsmall.RenderSentence('RUBBER DUCKY: YOU COULD USE THIS TO DISTRACT A GUARD BY THROWING IT (SPACE WHILE MOVING)', 500, 26)
+	text_surfs['help009'] = gamefontsmall.RenderSentence('SWORD: GUARDS CARRY THESE AROUND. IF YOU COULD GET YOUR HANDS ON ONE, THEY MIGHT BE SCARED OF YOU', 500, 26)
+	text_surfs['help010'] = gamefontsmall.RenderSentence('HAMMER: COULD BREAK SOMETHING THAT WAS WEAK (USE SPACE)', 400, 26)
+	text_surfs['help011'] = gamefontsmall.RenderSentence('PIECE OF CAKE: VERY DISTRACTING FOR GUARDS: A VERY YUMMY CAKE', 400, 26)
 	
 	# Load tileset image, set tile coords
 	global tiles
