@@ -47,6 +47,7 @@ def main(mainpath):
     
     # start up director
     #dir.change_scene('maingame', [True, 'testbig003'])
+    #dir.change_scene('maingame', [True, 'level1'])
     dir.change_scene('titlescene', [])
     dir.loop()
     

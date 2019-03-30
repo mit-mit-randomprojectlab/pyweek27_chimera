@@ -177,6 +177,15 @@ def init(mainpath,screen_res):
 		for i in range(3):
 			guisprites_coords.append((i*32, j*32, 32, 32))
 	
+	global titlegfx
+	titlegfx = []
+	titlegfx.append(pygame.image.load(os.path.join(mainpath,'data','gfx','title001.png')).convert())
+	titlegfx[-1].set_colorkey((255,0,255))
+	titlegfx.append(pygame.image.load(os.path.join(mainpath,'data','gfx','title002.png')).convert())
+	titlegfx[-1].set_colorkey((255,0,255))
+	titlegfx.append(pygame.image.load(os.path.join(mainpath,'data','gfx','title003.png')).convert())
+	titlegfx[-1].set_colorkey((255,0,255))
+	
 	# Load level data
 	global levels
 	levels = {}

@@ -191,7 +191,10 @@ class MainGame(GameScene):
 		self.behaviours.on_levelstart(level_id)
 		
 		# Check music
-		level_music = resources.level_music[resources.level_list.index(level_id)]
+		if level_id in resources.level_list:
+			level_music = resources.level_music[resources.level_list.index(level_id)]
+		else:
+			level_music = 'sneaky'
 		if not self.current_music == level_music:
 			self.current_music = level_music
 			pygame.mixer.music.stop()
@@ -373,9 +376,9 @@ class PauseScreen(GameScene):
 
 	
 	def quit_game_now(self):
-		#self.h_maingame.current_music = 'none'
+		self.h_maingame.current_music = 'none'
+		pygame.mixer.music.stop()
 		self.director.change_scene('titlescene', [])
-		#self.director.change_scene(None, [])
 	
 	def on_switchto(self, switchtoargs):
 		
@@ -458,7 +461,7 @@ class TitleScreen(GameScene):
 		self.fade = FadeInOut(30)
 		
 		# top-level menu buttons
-		self.pos_v = 400
+		self.pos_v = 420
 		if os.path.isfile(self.savepath):
 			self.button_newgame = MenuButton((0,self.pos_v),resources.text_surfs['newgame_on'],resources.text_surfs['newgame_off'],self.new_game_now)
 			self.button_continue = MenuButton((0,self.pos_v+48),resources.text_surfs['continue_on'],resources.text_surfs['continue_off'],self.continue_game_now)
@@ -471,11 +474,14 @@ class TitleScreen(GameScene):
 		# reset menu
 		self.topmenus.select_ind = 0
 		
+		self.tick = 0
+		
 		# Fade in game
 		self.background.fill((0,0,0))
 		self.fade.FadeIn()
 		
 	def on_update(self):
+		self.tick = (self.tick+1) % 30
 		self.fade.Update()
 		if self.fade.finished_out:
 			self.director.change_scene('maingame', [True,self.level_to])
@@ -489,6 +495,13 @@ class TitleScreen(GameScene):
 	
 	def on_draw(self, screen):
 		screen.blit(self.background, (0,0))
+		screen.blit(resources.titlegfx[0], (160,32))
+		if int(self.tick/15) % 2 == 0:
+			screen.blit(resources.titlegfx[1], (160,32))
+			screen.blit(resources.titlegfx[2], (160,26))
+		else:
+			screen.blit(resources.titlegfx[1], (160,26))
+			screen.blit(resources.titlegfx[2], (160,32))
 		self.topmenus.Draw(screen)
 		self.fadebackground.set_alpha(self.fade.alpha)
 		screen.blit(self.fadebackground, (0, 0))

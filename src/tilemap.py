@@ -265,7 +265,7 @@ class TiledLayers(object):
         	self.items.append(Item(self.parent,self.spawnlayer[tile],tile))
         
         # get goal tiles from occlayer
-        self.finish_tiles = [i for i, x in enumerate(self.occlayer) if x == -7]
+        self.finish_tiles = [i for i, x in enumerate(self.occlayer) if x == 2]
         
         # fix up occlayer to have zeros, now player end data extracted
         inds = [i for i, x in enumerate(self.occlayer) if x < 0]

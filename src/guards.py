@@ -41,7 +41,7 @@ class Guard(object):
 		
 		self.path = []
 		self.mode = 'patrol'
-		self.waypoints = []
+		self.waypoints = [tile]
 		self.current_wp = 0
 		
 		self.maxrpatrol = 32*10
