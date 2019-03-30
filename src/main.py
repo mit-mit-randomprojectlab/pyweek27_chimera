@@ -32,6 +32,7 @@ def main(mainpath):
     
     # Load game scenes
     maingame = game.MainGame(dir, screen_res)
+    maingame.savepath = os.path.join(mainpath,'data','saved_progress.txt')
     dir.addscene('maingame', maingame)
     
     pausescene = game.PauseScreen(dir, screen_res)
@@ -39,7 +40,13 @@ def main(mainpath):
     maingame.h_pausescene = pausescene
     pausescene.h_maingame = maingame
     
+    titlescene = game.TitleScreen(dir, screen_res)
+    titlescene.savepath = os.path.join(mainpath,'data','saved_progress.txt')
+    titlescene.h_maingame = maingame
+    dir.addscene('titlescene', titlescene)
+    
     # start up director
-    dir.change_scene('maingame', [True, 'testbig003'])
+    #dir.change_scene('maingame', [True, 'testbig003'])
+    dir.change_scene('titlescene', [])
     dir.loop()
     

@@ -60,6 +60,24 @@ class FadeInOut(object):
 		self.finished_in = False
 		self.musicfade = musicfade
 
+class ProgressData(object):
+    def __init__(self,parent):
+    	self.parent = parent
+        self.current_level = "level_"
+    
+    def LoadProgressData(self):
+        f = open(self.parent.savepath, "r");
+        self.current_level = f.readline().split()[0]
+        f.close()
+    
+    def SaveProgressData(self):
+        f = open(self.parent.savepath, "w");
+        f.write('%s\n'%(self.current_level))
+        f.close()
+    
+    def Reset(self):
+        self.current_level = "level_"
+
 class Camera(object):
 	def __init__(self,parent,screen_size,stickyness=0.33):
 		self.parent = parent
@@ -118,13 +136,13 @@ class MainGame(GameScene):
 		super(MainGame, self).__init__(director)
 		self.window_size = window_size
 		
-		# fade in/out
-		self.fade = FadeInOut(30)
-		
 		# Background
 		self.background = pygame.Surface(window_size)
 		self.background.fill((0,0,0))
 		self.background.convert()
+		
+		# Initialise player data
+		self.progress_data = ProgressData(self)
 		
 		# frame rate recording
 		self.avgframerate = -1
@@ -138,10 +156,17 @@ class MainGame(GameScene):
 			return
 		level_id = switchtoargs[1]
 		
+		# Save progress
+		self.progress_data.current_level = level_id
+		self.progress_data.SaveProgressData()
+		
 		self.paused = False
 		self.exiting = False
 		self.caught = False
 		self.caught_to = 0
+		
+		# fade in/out
+		self.fade = FadeInOut(30)
 		
 		# Initialise objects
 		self.camera = Camera(self,self.window_size)
@@ -336,8 +361,8 @@ class PauseScreen(GameScene):
 	
 	def quit_game_now(self):
 		#self.h_maingame.current_music = 'none'
-		#self.director.change_scene('titlescene', [])
-		self.director.change_scene(None, [])
+		self.director.change_scene('titlescene', [])
+		#self.director.change_scene(None, [])
 	
 	def on_switchto(self, switchtoargs):
 		
@@ -390,3 +415,67 @@ class PauseScreen(GameScene):
 			screen.blit(resources.text_surfs['controls003'], (0,offset+32))
 			screen.blit(resources.text_surfs['controls004'], (0,offset+48))
 
+class TitleScreen(GameScene):
+	def __init__(self, director, window_size):
+		super(TitleScreen, self).__init__(director)
+		self.window_size = window_size
+		
+		# Background
+		self.background = pygame.Surface(window_size)
+		self.background.fill((0,0,0))
+		self.background.convert()
+		
+		self.fadebackground = pygame.Surface(window_size)
+		self.fadebackground.fill((0,0,0))
+		self.fadebackground.convert()
+	
+	def new_game_now(self):
+		self.h_maingame.progress_data.Reset()
+		self.level_to = resources.level_list[0]
+		self.fade.FadeOut()
+	
+	def continue_game_now(self):
+		self.h_maingame.progress_data.LoadProgressData()
+		self.level_to = self.h_maingame.progress_data.current_level
+		self.fade.FadeOut()
+	
+	def on_switchto(self, switchtoargs):
+		
+		# fade in/out
+		self.fade = FadeInOut(30)
+		
+		# top-level menu buttons
+		self.pos_v = 400
+		if os.path.isfile(self.savepath):
+			self.button_newgame = MenuButton((0,self.pos_v),resources.text_surfs['newgame_on'],resources.text_surfs['newgame_off'],self.new_game_now)
+			self.button_continue = MenuButton((0,self.pos_v+48),resources.text_surfs['continue_on'],resources.text_surfs['continue_off'],self.continue_game_now)
+			self.buttonlist = [self.button_newgame,self.button_continue]
+		else:
+			self.button_newgame = MenuButton((0,self.pos_v),resources.text_surfs['newgame_on'],resources.text_surfs['newgame_off'],self.new_game_now)
+			self.buttonlist = [self.button_newgame]
+		self.topmenus = MenuList(self.buttonlist,0,resources.controlmap)
+		
+		# reset menu
+		self.topmenus.select_ind = 0
+		
+		# Fade in game
+		self.background.fill((0,0,0))
+		self.fade.FadeIn()
+		
+	def on_update(self):
+		self.fade.Update()
+		if self.fade.finished_out:
+			self.director.change_scene('maingame', [True,self.level_to])
+	
+	def on_event(self, events):
+		for event in events:
+			if event.type == KEYDOWN and event.key == K_ESCAPE:
+				self.director.change_scene(None, [])
+			if event.type == KEYDOWN:
+				self.topmenus.ProcessKeyEvent(event)
+	
+	def on_draw(self, screen):
+		screen.blit(self.background, (0,0))
+		self.topmenus.Draw(screen)
+		self.fadebackground.set_alpha(self.fade.alpha)
+		screen.blit(self.fadebackground, (0, 0))

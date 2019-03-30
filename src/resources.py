@@ -95,6 +95,11 @@ def init(mainpath,screen_res):
 	global text_surfs
 	
 	text_surfs = {}
+	text_surfs['newgame_on'] = gamefont.RenderSentence('NEW GAME', 800, 26, align='vcentre')
+	text_surfs['newgame_off'] = gamefontgrey.RenderSentence('NEW GAME', 800, 26, align='vcentre')
+	text_surfs['continue_on'] = gamefont.RenderSentence('CONTINUE GAME', 800, 26, align='vcentre')
+	text_surfs['continue_off'] = gamefontgrey.RenderSentence('CONTINUE GAME', 800, 26, align='vcentre')
+	
 	text_surfs['resume_on'] = gamefont.RenderSentence('RESUME GAME', 800, 26, align='vcentre')
 	text_surfs['resume_off'] = gamefontgrey.RenderSentence('RESUME GAME', 800, 26, align='vcentre')
 	text_surfs['reset_on'] = gamefont.RenderSentence('RESET GAME (R)', 800, 26, align='vcentre')
@@ -181,7 +186,7 @@ def init(mainpath,screen_res):
 		levels[level_name] = level_data.LevelData(path=os.path.join(mainpath,'data','level',f))
 	
 	global level_list
-	level_list = ['testbig002','test001']
+	level_list = ['testbig003','test001']
 	
 	# Sound Data
 	global soundfx
