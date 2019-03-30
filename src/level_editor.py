@@ -192,7 +192,7 @@ class LevelEditor(GameScene):
 		if i < 0 or i >= msx or j < 0 or j >= msy:
 			return
 		self.level.data['tilemap']['layerocc'][msx * j + i] = self.level.data['tilemap']['layerocc'][int(msx * j + i)]  +  1
-		if self.level.data['tilemap']['layerocc'][msx * j + i] > 4:
+		if self.level.data['tilemap']['layerocc'][msx * j + i] > 2:
 			self.level.data['tilemap']['layerocc'][msx * j + i] = 0
 
 	def SetOcc(self, x, y, value):
@@ -369,7 +369,7 @@ class LevelEditor(GameScene):
 
 		# OCC RULE
 		def occ_rule(x, y, tile):
-			if tile == -1:
+			if tile == -1 or tile in [8, 18, 28]:
 				self.SetOcc(x, y, 0)
 			else:
 				self.SetOcc(x, y, 1)
