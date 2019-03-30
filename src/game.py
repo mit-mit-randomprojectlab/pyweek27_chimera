@@ -164,6 +164,11 @@ class MainGame(GameScene):
 			self.tiledlayers.guards[1].waypoints = [496,484,869,880]
 			self.tiledlayers.guards[1].current_wp = 0
 			self.tiledlayers.guards[1].PickupItem(self.tiledlayers.items[1])
+		elif self.tiledlayers.level_id == 'level4':
+			self.tiledlayers.guards[0].waypoints = [247,250]
+			self.tiledlayers.guards[0].current_wp = 0
+			self.tiledlayers.guards[1].waypoints = [330,322]
+			self.tiledlayers.guards[1].current_wp = 0
 	
 	def eb_on_update(self):
 		if self.tiledlayers.level_id == 'level2':
@@ -171,6 +176,11 @@ class MainGame(GameScene):
 				self.tiledlayers.passages[1].Open()
 			else:
 				self.tiledlayers.passages[1].Close()
+		if self.tiledlayers.level_id == 'level4':
+			if self.tiledlayers.buttons[0].state == True and self.tiledlayers.buttons[1].state == True and \
+				self.tiledlayers.buttons[2].state == True and self.tiledlayers.buttons[3].state == True and \
+				self.tiledlayers.buttons[4].state == True and self.tiledlayers.buttons[5].state == True:
+				self.tiledlayers.passages[1].Open()
 	
 	def on_switchto(self, switchtoargs):
 	
