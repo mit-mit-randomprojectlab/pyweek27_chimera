@@ -29,6 +29,10 @@ class Level_Behaviours(object):
 		self.level_init['level1'] = self.level1_init
 		self.level_update['level1'] = self.level1_update
 
+
+		self.level_init['level3'] = self.level3_init
+		self.level_update['level3'] = self.level3_update
+
 	# on_levelstart: gets called when level is first loaded
 	def on_levelstart(self,level_id):
 
@@ -62,6 +66,49 @@ class Level_Behaviours(object):
 	def level1_update(self):
 		if self.parent.tiledlayers.buttons[0].state == True and self.parent.tiledlayers.buttons[1].state == True:
 			self.parent.tiledlayers.passages[3].Open()
+
+	def level3_init(self):
+		# self.parent.tiledlayers.guards[0].waypoints = [132, 623]
+		# self.parent.tiledlayers.guards[0].current_wp = 0
+		# DOORS
+		self.parent.tiledlayers.passages[0].Open()
+		self.parent.tiledlayers.passages[1].Open()
+		# GUARD 0
+		self.parent.tiledlayers.guards[0].waypoints = [271, 521, 688, 503]
+		self.parent.tiledlayers.guards[0].current_wp = 0
+		# GUARD 1
+		sword = self.parent.tiledlayers.items[2]
+		self.parent.tiledlayers.guards[1].PickupItem(sword)
+		# GUARD 3
+		self.parent.tiledlayers.guards[3].waypoints = [792, 797, 920, 925]
+		# BUTTONS
+		self.buttonProgress = 0
+		self.lastPress = -1
+
+	def level3_update(self):
+		if self.parent.tiledlayers.buttons[0].state == True:
+			self.parent.tiledlayers.passages[0].Open()
+			self.parent.tiledlayers.passages[1].Open()
+		else:
+			self.parent.tiledlayers.passages[0].Close()
+			self.parent.tiledlayers.passages[1].Close()
+		for i in range(1, 5):
+			if self.parent.tiledlayers.buttons[i].state == True:
+				if self.buttonProgress == 0:
+					self.buttonProgress = 1
+					self.lastPress = i
+				elif self.lastPress == i:
+					continue
+				elif self.lastPress == i - 1 or self.lastPress == 4 and i == 1:
+					self.buttonProgress += 1
+					self.lastPress = i
+				elif self.buttonProgress != i:
+					self.buttonProgress = 0
+		if self.buttonProgress == 4:
+			self.parent.tiledlayers.passages[3].Open()
+		if self.parent.tiledlayers.buttons[5].state == True:
+			self.parent.tiledlayers.passages[4].Open()
+
 
 	def testbig003_init(self):
 		self.parent.tiledlayers.guards[0].waypoints = [141,341,528,391]
