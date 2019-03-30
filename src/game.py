@@ -141,6 +141,9 @@ class MainGame(GameScene):
 		self.background.fill((0,0,0))
 		self.background.convert()
 		
+		# Music
+		self.current_music = 'none'
+		
 		# Initialise player data
 		self.progress_data = ProgressData(self)
 		
@@ -186,6 +189,16 @@ class MainGame(GameScene):
 		
 		# Initialise level behaviours
 		self.behaviours.on_levelstart(level_id)
+		
+		# Check music
+		level_music = resources.level_music[resources.level_list.index(level_id)]
+		if not self.current_music == level_music:
+			self.current_music = level_music
+			pygame.mixer.music.stop()
+			if not self.current_music == 'none':
+				pygame.mixer.music.load(resources.musicpaths[self.current_music])
+				pygame.mixer.music.set_volume(0.5)
+				pygame.mixer.music.play(-1)
 		
 		# Fade in game
 		self.background.fill((0,0,0))

@@ -61,6 +61,9 @@ class Guard(object):
 		
 		self.guialert_to = 0
 		self.guiinvestigate_to = 0
+		
+		self.musicfadinout = 0
+		self.washoldup = False
 	
 	def PickupItem(self,item):
 		self.item = item
@@ -175,6 +178,7 @@ class Guard(object):
 		anispeed2 = self.anispeed2
 		
 		direct_chase = False
+		self.prevmode = self.mode
 		
 		if self.mode == 'none':
 			vx = 0
@@ -305,6 +309,9 @@ class Guard(object):
 				self.parent.caught_id.flash_to = 60
 				self.parent.camera.SetWaypoint([self.parent.caught_id.x,self.parent.caught_id.y])
 				self.parent.control.current_p = self.parent.inmates.index(self.parent.caught_id)
+				pygame.mixer.music.stop()
+				resources.soundfx['policesiren'].play()
+				self.parent.current_music = 'none'
 			if dist > self.maxrpatrol:
 				self.mode = 'wait'
 				self.wait_to = 60
@@ -432,6 +439,7 @@ class Guard(object):
 				self.path = self.parent.tiledlayers.planner.astar_path(init_tile, self.waypoints[self.current_wp])
 		
 		elif self.mode == 'holdup':
+			self.washoldup = True
 			vx = 0
 			vy = 0
 			self.guialert_to = 10
@@ -443,6 +451,28 @@ class Guard(object):
 		# check for hold up
 		if not self.mode == 'holdup':
 			holdup = self.SeeSword(vx,vy,speed)
+		
+		# check music transitions
+		if self.mode == 'chase' and not self.prevmode == 'chase' and not self.washoldup:
+			self.musicfadinout = 0
+			pygame.mixer.music.stop()
+			pygame.mixer.music.load(resources.musicpaths['tense_chase'])
+			pygame.mixer.music.set_volume(0.5)
+			pygame.mixer.music.play(-1)
+		
+		if self.prevmode == 'chase' and not self.mode == 'chase' and not self.washoldup:
+			self.musicfadinout = 30
+		if self.musicfadinout >= 0:
+			self.musicfadinout -= 1
+			if self.musicfadinout > 15:
+				pygame.mixer.music.set_volume(0.5*(self.musicfadinout-15)/15)
+			elif self.musicfadinout == 15:
+				pygame.mixer.music.stop()
+				pygame.mixer.music.load(resources.musicpaths[self.parent.current_music])
+				pygame.mixer.music.set_volume(0.5)
+				pygame.mixer.music.play(-1)
+			elif self.musicfadinout < 15:
+				pygame.mixer.music.set_volume(0.5*(15-self.musicfadinout)/15)
 		
 		# Update whether seen
 		"""

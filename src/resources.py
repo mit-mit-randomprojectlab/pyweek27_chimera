@@ -200,6 +200,16 @@ def init(mainpath,screen_res):
 	soundfx['whistle'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','whistle.ogg'))
 	soundfx['door'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','door.ogg'))
 	soundfx['break'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','boulders.ogg'))
+	soundfx['policesiren'] = pygame.mixer.Sound(os.path.join(mainpath,'data','snd','policesiren.ogg'))
+	
+	# Music Data
+	global musicpaths
+	musicpaths = {}
+	musicpaths['tense_chase'] = os.path.join(mainpath,'data','music','tense_chase.ogg')
+	musicpaths['sneaky'] = os.path.join(mainpath,'data','music','sneaky.ogg')
+	
+	global level_music
+	level_music = ['sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky']
 	
 	# pre-sets and controls
 	global controlmap
