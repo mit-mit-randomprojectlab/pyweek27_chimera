@@ -151,6 +151,22 @@ class MainGame(GameScene):
 		self.avgframerate = -1
 		self.frsamples = 0
 	
+	def eb_on_levelstart(self):
+		if self.tiledlayers.level_id == 'level2':
+			self.tiledlayers.guards[0].waypoints = [444,892,885,469]
+			self.tiledlayers.guards[0].current_wp = 0
+			self.tiledlayers.guards[0].PickupItem(self.tiledlayers.items[0])
+			self.tiledlayers.guards[1].waypoints = [496,484,869,880]
+			self.tiledlayers.guards[1].current_wp = 0
+			self.tiledlayers.guards[1].PickupItem(self.tiledlayers.items[1])
+	
+	def eb_on_update(self):
+		if self.tiledlayers.level_id == 'level2':
+			if self.tiledlayers.buttons[0].state == True:
+				self.tiledlayers.passages[1].Open()
+			else:
+				self.tiledlayers.passages[1].Close()
+	
 	def on_switchto(self, switchtoargs):
 	
 		# Check if un-pause or resetting level
@@ -189,6 +205,7 @@ class MainGame(GameScene):
 		
 		# Initialise level behaviours
 		self.behaviours.on_levelstart(level_id)
+		self.eb_on_levelstart()
 		
 		# Check music
 		if level_id in resources.level_list:
@@ -219,6 +236,7 @@ class MainGame(GameScene):
 		
 		# Update level behaviours
 		self.behaviours.on_update()
+		self.eb_on_update()
 		
 		# framerate tracking
 		self.frsamples += 1
@@ -447,7 +465,8 @@ class TitleScreen(GameScene):
 	
 	def new_game_now(self):
 		self.h_maingame.progress_data.Reset()
-		self.level_to = resources.level_list[0]
+		#self.level_to = resources.level_list[0]
+		self.level_to = 'cutscene'
 		self.fade.FadeOut()
 	
 	def continue_game_now(self):
@@ -484,7 +503,10 @@ class TitleScreen(GameScene):
 		self.tick = (self.tick+1) % 30
 		self.fade.Update()
 		if self.fade.finished_out:
-			self.director.change_scene('maingame', [True,self.level_to])
+			if self.level_to == 'cutscene':
+				self.director.change_scene('cutscene', ['news001','none','maingame',[True,'level1']])
+			else:
+				self.director.change_scene('maingame', [True,self.level_to])
 	
 	def on_event(self, events):
 		for event in events:
@@ -505,3 +527,60 @@ class TitleScreen(GameScene):
 		self.topmenus.Draw(screen)
 		self.fadebackground.set_alpha(self.fade.alpha)
 		screen.blit(self.fadebackground, (0, 0))
+
+class CutScene(GameScene):
+	def __init__(self, director, window_size):
+		super(CutScene, self).__init__(director)
+		self.window_size = window_size
+		
+		# Background
+		self.background = pygame.Surface(window_size)
+		self.background.fill((0,0,0))
+		self.background.convert()
+		
+		self.fadebackground = pygame.Surface(window_size)
+		self.fadebackground.fill((0,0,0))
+		self.fadebackground.convert()
+		
+		self.fade = FadeInOut(30)
+		self.exiting = False
+	
+	def on_switchto(self, switchtoargs):
+		self.exiting = False
+		self.scenesurf = switchtoargs[0]
+		self.scenemusic = switchtoargs[1]
+		self.nextscene = switchtoargs[2]
+		self.nextscenedata = switchtoargs[3]
+		
+		# setup music
+		if not self.scenemusic == 'none':
+			pygame.mixer.music.load(resources.musicpaths[self.scenemusic])
+			pygame.mixer.music.set_volume(0.5)
+			pygame.mixer.music.play(-1)
+		
+		self.fade.FadeIn()
+		
+	def on_update(self):
+		
+		# Check for return to game
+		self.fade.Update()
+		if self.exiting and self.fade.direction == 'in':
+			self.fade.FadeOut(True)
+		if self.fade.finished_out:
+			pygame.mixer.music.set_volume(0)
+			self.director.change_scene(self.nextscene, self.nextscenedata)
+	
+	def on_event(self, events):
+		for event in events:
+			if event.type == KEYDOWN and event.key == K_ESCAPE:
+				self.exiting = True
+			if event.type == KEYDOWN:
+				self.exiting = True
+	
+	def on_draw(self, screen):
+		screen.blit(self.background, (0, 0))
+		surf = resources.cutscenesurfs[self.scenesurf]
+		screen.blit(surf, (400-surf.get_width()/2,300-surf.get_height()/2))
+		self.fadebackground.set_alpha(self.fade.alpha)
+		screen.blit(self.fadebackground, (0, 0))
+

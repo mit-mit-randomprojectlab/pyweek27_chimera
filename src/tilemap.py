@@ -268,7 +268,7 @@ class TiledLayers(object):
         self.finish_tiles = [i for i, x in enumerate(self.occlayer) if x == 2]
         
         # fix up occlayer to have zeros, now player end data extracted
-        inds = [i for i, x in enumerate(self.occlayer) if x < 0]
+        inds = [i for i, x in enumerate(self.occlayer) if x == 2]
         for i in inds:
         	self.occlayer[i] = 0
         

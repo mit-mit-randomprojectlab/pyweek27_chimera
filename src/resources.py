@@ -186,6 +186,18 @@ def init(mainpath,screen_res):
 	titlegfx.append(pygame.image.load(os.path.join(mainpath,'data','gfx','title003.png')).convert())
 	titlegfx[-1].set_colorkey((255,0,255))
 	
+	# Cutscene Surfaces
+	global cutscenesurfs
+	cutscenesurfs = {}
+	
+	# Logo
+	cutscenesurfs['team_chimera'] = pygame.image.load(os.path.join(mainpath,'data','gfx','team_chimera_6x.png')).convert()
+	cutscenesurfs['team_chimera'].set_colorkey((255,0,255))
+	
+	# Logo
+	cutscenesurfs['news001'] = pygame.image.load(os.path.join(mainpath,'data','gfx','news_2x.png')).convert()
+	cutscenesurfs['news001'].set_colorkey((255,0,255))
+	
 	# Load level data
 	global levels
 	levels = {}
@@ -195,7 +207,7 @@ def init(mainpath,screen_res):
 		levels[level_name] = level_data.LevelData(path=os.path.join(mainpath,'data','level',f))
 	
 	global level_list
-	level_list = ['testbig003','test001']
+	level_list = ['level1','level2','level3','testbig003','test001']
 	
 	# Sound Data
 	global soundfx

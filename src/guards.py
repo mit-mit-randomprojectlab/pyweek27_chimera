@@ -44,11 +44,11 @@ class Guard(object):
 		self.waypoints = [tile]
 		self.current_wp = 0
 		
-		self.maxrpatrol = 32*10
-		self.maxrinvestigate = 32*3
+		self.maxrpatrol = 32*7
+		self.maxrinvestigate = 32*2
 		self.maxrchase = 32*5
 		self.maxrsword = 32*3
-		self.maxreating = 32*1
+		self.maxreating = 32*2
 		
 		self.wait_to = -1
 		self.target = None

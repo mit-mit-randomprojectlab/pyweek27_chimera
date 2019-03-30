@@ -24,7 +24,7 @@ def main(mainpath):
     # start up director
     framerate = 30
     screen_res = (800,600)
-    window_title = "Pyweek27: Team Chimera"
+    window_title = "Pyweek27: Breakout Blue (Team Chimera)"
     dir = GameDirector(window_title, screen_res, framerate)
     
     # Load resources
@@ -45,9 +45,13 @@ def main(mainpath):
     titlescene.h_maingame = maingame
     dir.addscene('titlescene', titlescene)
     
+    cutscene = game.CutScene(dir, screen_res)
+    dir.addscene('cutscene', cutscene)
+    
     # start up director
     #dir.change_scene('maingame', [True, 'testbig003'])
-    #dir.change_scene('maingame', [True, 'level1'])
-    dir.change_scene('titlescene', [])
+    #dir.change_scene('maingame', [True, 'level2'])
+    #dir.change_scene('titlescene', [])
+    dir.change_scene('cutscene', ['team_chimera','none','titlescene',[]])
     dir.loop()
     
