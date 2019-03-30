@@ -53,5 +53,6 @@ def main(mainpath):
     #dir.change_scene('maingame', [True, 'level2'])
     #dir.change_scene('titlescene', [])
     dir.change_scene('cutscene', ['team_chimera','none','titlescene',[]])
+    #dir.change_scene('cutscene', ['news002','tense_chase','titlescene',[]])
     dir.loop()
     

@@ -109,6 +109,8 @@ def init(mainpath,screen_res):
 	text_surfs['quit_on'] = gamefont.RenderSentence('QUIT GAME', 800, 26, align='vcentre')
 	text_surfs['quit_off'] = gamefontgrey.RenderSentence('QUIT GAME', 800, 26, align='vcentre')
 	
+	text_surfs['stage_clear'] = gamefont.RenderSentence('STAGE CLEAR!', 800, 26, align='vcentre')
+	
 	text_surfs['controls001'] = gamefontgreysmall.RenderSentence('CONTROLS:', 800, 13, align='vcentre')
 	text_surfs['controls002'] = gamefontgreysmall.RenderSentence('ARROW KEYS: MOVE PLAYER', 800, 13, align='vcentre')
 	text_surfs['controls003'] = gamefontgreysmall.RenderSentence('TAB: SWITCH BETWEEN PLAYERS', 800, 13, align='vcentre')
@@ -125,6 +127,18 @@ def init(mainpath,screen_res):
 	text_surfs['help009'] = gamefontsmall.RenderSentence('SWORD: GUARDS CARRY THESE AROUND. IF YOU COULD GET YOUR HANDS ON ONE, THEY MIGHT BE SCARED OF YOU', 500, 26)
 	text_surfs['help010'] = gamefontsmall.RenderSentence('HAMMER: COULD BREAK SOMETHING THAT WAS WEAK (USE SPACE)', 400, 26)
 	text_surfs['help011'] = gamefontsmall.RenderSentence('PIECE OF CAKE: VERY DISTRACTING FOR GUARDS: A VERY YUMMY CAKE', 400, 26)
+	
+	text_surfs['level1tips'] = []
+	text_surfs['level1tips'].append(gamefont.RenderSentence('WELCOME TO BLUELAND STATE PENITENTIARY, SCUM BAGS!', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('HOPE YOU BROUGHT SOME READING MATERIAL, BECAUSE YOU FELLAS ARE GOING TO BE HERE A LOOONG TIME!', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('GO AHEAD, STRETCH YOUR LEGS, HAVE A WALK AROUND (ARROW KEYS)', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('NOT MUCH ROOM TO PACE AROUND IN THERE! HA HA HA!', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('YOU WANNA OPEN THE DOOR? JUST WALK UP TO IT (AND PRESS SPACE)', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('OH YEAH, THATS RIGHT ... I FORGOT ITS LOCKED AND I HAVE THE ONLY KEY! HA HA HA!', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('ANYTIME YOU WANNA SWAP WITH YOUR GANG MEMBERS, SURE GO AHEAD (PRESS TAB)', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('ACTUALLY, YOU CAN`T DO THAT EITHER CAUSE THEYRE ON THE OTHER SIDE OF THE PRISON!', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('YOU BOYS AINT EVER GETTIN OUT! HA HA HA!', 800, 104, align='vcentre'))
+	text_surfs['level1tips'].append(gamefont.RenderSentence('(PRESS ESC AND SEE HELP/TIPS IF DESIRED)', 800, 104, align='vcentre'))
 	
 	# Load tileset image, set tile coords
 	global tiles
@@ -194,9 +208,13 @@ def init(mainpath,screen_res):
 	cutscenesurfs['team_chimera'] = pygame.image.load(os.path.join(mainpath,'data','gfx','team_chimera_6x.png')).convert()
 	cutscenesurfs['team_chimera'].set_colorkey((255,0,255))
 	
-	# Logo
+	# News at start
 	cutscenesurfs['news001'] = pygame.image.load(os.path.join(mainpath,'data','gfx','news_2x.png')).convert()
 	cutscenesurfs['news001'].set_colorkey((255,0,255))
+	
+	# News at end
+	cutscenesurfs['news002'] = pygame.image.load(os.path.join(mainpath,'data','gfx','news2_2x.png')).convert()
+	cutscenesurfs['news002'].set_colorkey((255,0,255))
 	
 	# Load level data
 	global levels
@@ -207,7 +225,8 @@ def init(mainpath,screen_res):
 		levels[level_name] = level_data.LevelData(path=os.path.join(mainpath,'data','level',f))
 	
 	global level_list
-	level_list = ['level1','level2','level3','testbig003','test001']
+	#level_list = ['level1','level2','level3','testbig003','test001']
+	level_list = ['testbig003']
 	
 	# Sound Data
 	global soundfx

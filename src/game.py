@@ -141,6 +141,11 @@ class MainGame(GameScene):
 		self.background.fill((0,0,0))
 		self.background.convert()
 		
+		self.background2 = pygame.Surface((800,200))
+		self.background2.fill((0,0,0))
+		self.background2.convert()
+		self.background2.set_alpha(200)
+		
 		# Music
 		self.current_music = 'none'
 		
@@ -191,6 +196,8 @@ class MainGame(GameScene):
 		self.camera = Camera(self,self.window_size)
 		self.tiledlayers = tilemap.TiledLayers(self)
 		self.control = players.MasterControl(self,resources.controlmap)
+		if level_id == 'level2':
+			self.control.helptips_ind = 0
 		n_inmates = len([i for i in resources.levels[level_id].data['tilemap']['layerspawn'] if i >= 6 and i <= 11])
 		self.inmates = []
 		for i in range(n_inmates):
@@ -262,9 +269,11 @@ class MainGame(GameScene):
 			if self.tiledlayers.exiting: # finished level
 				ind_next = resources.level_list.index(self.tiledlayers.level_id)+1
 				if ind_next == len(resources.level_list):
-					ind_next = 0
-				next_level = resources.level_list[ind_next]
-				self.director.change_scene('maingame', [True, next_level])
+					self.current_music = 'none'
+					self.director.change_scene('cutscene', ['news002','tense_chase','titlescene',[]])
+				else:
+					next_level = resources.level_list[ind_next]
+					self.director.change_scene('maingame', [True, next_level])
 			elif self.caught: # reset level
 				self.director.change_scene('maingame', [True, self.tiledlayers.level_id])
 		
@@ -291,6 +300,11 @@ class MainGame(GameScene):
 			guard.DrawGUI(screen)
 		if resources.debug_graphics:
 			self.tiledlayers.RenderGoalTiles(screen)
+		if self.control.helptips_ind < 10: # drawing help surface messages on top
+			screen.blit(self.background2, (0, 200))
+			screen.blit(resources.text_surfs['level1tips'][self.control.helptips_ind], (0,250))
+		if self.exiting:
+			screen.blit(resources.text_surfs['stage_clear'], (0,250))
 		#screen.blit(resources.text_surfs['test001'], (0,self.window_size[1]/2-resources.text_surfs['test001'].get_height()/2))
 	
 	def on_draw(self, screen):
@@ -504,7 +518,7 @@ class TitleScreen(GameScene):
 		self.fade.Update()
 		if self.fade.finished_out:
 			if self.level_to == 'cutscene':
-				self.director.change_scene('cutscene', ['news001','none','maingame',[True,'level1']])
+				self.director.change_scene('cutscene', ['news001','none','maingame',[True,resources.level_list[0]]])
 			else:
 				self.director.change_scene('maingame', [True,self.level_to])
 	
@@ -554,9 +568,12 @@ class CutScene(GameScene):
 		
 		# setup music
 		if not self.scenemusic == 'none':
+			pygame.mixer.music.stop()
 			pygame.mixer.music.load(resources.musicpaths[self.scenemusic])
 			pygame.mixer.music.set_volume(0.5)
 			pygame.mixer.music.play(-1)
+		else:
+			pygame.mixer.music.stop()
 		
 		self.fade.FadeIn()
 		

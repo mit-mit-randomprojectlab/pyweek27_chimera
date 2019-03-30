@@ -22,8 +22,13 @@ class MasterControl(object):
 		self.CM = controlmap
 		self.current_p = 0
 		self.exiting = False
+		self.helptips_ind = 20
 	
 	def ProcessKeyEvent(self,event):
+		if self.helptips_ind < 10:
+			if event.type == KEYDOWN:
+				self.helptips_ind += 1
+				return
 		current_control = self.parent.inmates[self.current_p].control
 		if self.parent.caught: # cut controls if caught
 			return
