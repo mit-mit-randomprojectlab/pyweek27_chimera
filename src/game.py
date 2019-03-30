@@ -61,22 +61,22 @@ class FadeInOut(object):
 		self.musicfade = musicfade
 
 class ProgressData(object):
-    def __init__(self,parent):
-    	self.parent = parent
-        self.current_level = "level_"
-    
-    def LoadProgressData(self):
-        f = open(self.parent.savepath, "r");
-        self.current_level = f.readline().split()[0]
-        f.close()
-    
-    def SaveProgressData(self):
-        f = open(self.parent.savepath, "w");
-        f.write('%s\n'%(self.current_level))
-        f.close()
-    
-    def Reset(self):
-        self.current_level = "level_"
+	def __init__(self,parent):
+		self.parent = parent
+		self.current_level = "level_"
+	
+	def LoadProgressData(self):
+		f = open(self.parent.savepath, "r");
+		self.current_level = f.readline().split()[0]
+		f.close()
+	
+	def SaveProgressData(self):
+		f = open(self.parent.savepath, "w");
+		f.write('%s\n'%(self.current_level))
+		f.close()
+	
+	def Reset(self):
+		self.current_level = "level_"
 
 class Camera(object):
 	def __init__(self,parent,screen_size,stickyness=0.33):
