@@ -26,6 +26,9 @@ class Level_Behaviours(object):
 		self.level_init['testbig003'] = self.testbig003_init
 		self.level_update['testbig003'] = self.DoorTest
 
+		self.level_init['level1'] = self.level1_init
+		self.level_update['level1'] = self.level1_update
+
 	# on_levelstart: gets called when level is first loaded
 	def on_levelstart(self,level_id):
 
@@ -51,8 +54,14 @@ class Level_Behaviours(object):
 	# SPECIFIC LEVEL FUNCTIONS BELOW HERE
 
 	def level1_init(self):
-		self.parent.tiledlayers.guards[0].waypoints = [0]
+		self.parent.tiledlayers.guards[0].waypoints = [132, 623]
 		self.parent.tiledlayers.guards[0].current_wp = 0
+		self.parent.tiledlayers.passages[0].Open()
+		self.parent.tiledlayers.passages[1].Open()
+
+	def level1_update(self):
+		if self.parent.tiledlayers.buttons[0].state == True and self.parent.tiledlayers.buttons[1].state == True:
+			self.parent.tiledlayers.passages[3].Open()
 
 	def testbig003_init(self):
 		self.parent.tiledlayers.guards[0].waypoints = [141,341,528,391]
