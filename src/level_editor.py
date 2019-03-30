@@ -192,8 +192,8 @@ class LevelEditor(GameScene):
 		if i < 0 or i >= msx or j < 0 or j >= msy:
 			return
 		self.level.data['tilemap']['layerocc'][msx * j + i] = self.level.data['tilemap']['layerocc'][int(msx * j + i)]  +  1
-		if self.level.data['tilemap']['layerocc'][msx * j + i] > 2:
-			self.level.data['tilemap']['layerocc'][msx * j + i] = -2
+		if self.level.data['tilemap']['layerocc'][msx * j + i] > 4:
+			self.level.data['tilemap']['layerocc'][msx * j + i] = 0
 
 	def SetOcc(self, x, y, value):
 		msx = self.level.data['tilemap']['size'][0]
@@ -382,7 +382,7 @@ class LevelEditor(GameScene):
 	def on_update(self):
 		self.mouse_pos = pygame.mouse.get_pos()
 		if self.mouse_down:
-			self.on_mousePress()
+			self.on_mousePress(fresh = False)
 		#print self.mouse_pos
 
 	def on_event(self, events):
@@ -392,7 +392,7 @@ class LevelEditor(GameScene):
 				self.on_keyDown(event.key)
 			elif event.type == MOUSEBUTTONDOWN:
 				self.mouse_down = event.button
-				self.on_mousePress()
+				self.on_mousePress(fresh = True)
 			elif event.type == MOUSEBUTTONUP:
 				self.mouse_down = False
 
@@ -452,7 +452,7 @@ class LevelEditor(GameScene):
 		if key == K_q:
 			self.objectdrawtype = 'none'
 
-	def on_mousePress(self):
+	def on_mousePress(self, fresh = False):
 		if not self.level == None:
 			sx = self.mainwindowparams[0]
 			sy = self.mainwindowparams[1]
@@ -465,9 +465,9 @@ class LevelEditor(GameScene):
 				tile = msx * coords[1] + coords[0]
 				if coords[0] >= 0 and coords[0] < msx and coords[1] >= 0 and coords[1] < msy:
 					if self.objectdrawtype == 'none':
-						if self.tilemode == 'o':
+						if self.tilemode == 0 and fresh:
 							self.ToggleOcc(coords[0], coords[1])
-						else:
+						elif self.tilemode > 0:
 							if self.mouse_down == 1:
 								self.AssignTile(self.tilemode, coords[0], coords[1], self.draw_type)
 							else:
@@ -527,11 +527,12 @@ class LevelEditor(GameScene):
 					coords = [i * self.tilesize, j * self.tilesize]
 					occval = self.level.data['tilemap']['layerocc'][msx * j + i]
 					colors = {
-						-2: (255, 0, 0),
-						-1: (255, 255, 0),
+						-1: (100, 100, 100),
 						0: (0, 0, 0),
 						1: (255, 255, 255),
-						2: (0, 0, 255)
+						2: (0, 0, 255),
+				    	3: (255, 0, 0),
+					    4: (255, 255, 0),
 					}
 					pygame.draw.rect(self.mainwindowsurf, colors[occval], pygame.Rect((coords[0], coords[1]), (self.tilesize, self.tilesize)))
 
