@@ -225,8 +225,8 @@ def init(mainpath,screen_res):
 		levels[level_name] = level_data.LevelData(path=os.path.join(mainpath,'data','level',f))
 	
 	global level_list
-	#level_list = ['level1','level2','level3','testbig003','test001']
-	level_list = ['testbig003']
+	level_list = ['level1','level2','level3','level4']
+	#level_list = ['testbig003']
 	
 	# Sound Data
 	global soundfx

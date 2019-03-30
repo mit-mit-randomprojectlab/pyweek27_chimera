@@ -196,7 +196,7 @@ class MainGame(GameScene):
 		self.camera = Camera(self,self.window_size)
 		self.tiledlayers = tilemap.TiledLayers(self)
 		self.control = players.MasterControl(self,resources.controlmap)
-		if level_id == 'level2':
+		if level_id == 'level1':
 			self.control.helptips_ind = 0
 		n_inmates = len([i for i in resources.levels[level_id].data['tilemap']['layerspawn'] if i >= 6 and i <= 11])
 		self.inmates = []
