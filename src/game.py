@@ -308,8 +308,7 @@ class MainGame(GameScene):
 		self.tiledlayers.RenderFGLayer(screen)
 		for guard in self.tiledlayers.guards:
 			guard.DrawGUI(screen)
-		if resources.debug_graphics:
-			self.tiledlayers.RenderGoalTiles(screen)
+		self.tiledlayers.RenderGoalTiles(screen)
 		if self.control.helptips_ind < 10: # drawing help surface messages on top
 			screen.blit(self.background2, (0, 200))
 			screen.blit(resources.text_surfs['level1tips'][self.control.helptips_ind], (0,250))
@@ -517,6 +516,11 @@ class TitleScreen(GameScene):
 		# reset menu
 		self.topmenus.select_ind = 0
 		
+		pygame.mixer.music.stop()
+		pygame.mixer.music.load(resources.musicpaths['title_music'])
+		pygame.mixer.music.set_volume(0.5)
+		pygame.mixer.music.play(-1)
+		
 		self.tick = 0
 		
 		# Fade in game
@@ -529,8 +533,10 @@ class TitleScreen(GameScene):
 		if self.fade.finished_out:
 			if self.level_to == 'cutscene':
 				self.director.change_scene('cutscene', ['news001','none','maingame',[True,resources.level_list[0]]])
+				pygame.mixer.music.stop()
 			else:
 				self.director.change_scene('maingame', [True,self.level_to])
+				pygame.mixer.music.stop()
 	
 	def on_event(self, events):
 		for event in events:

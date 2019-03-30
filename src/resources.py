@@ -83,7 +83,7 @@ class GameFont(object):
 def init(mainpath,screen_res):
 	
 	global debug_graphics
-	debug_graphics = True
+	debug_graphics = False
 	
 	# Fonts and text
 	gamefont = GameFont(mainpath,'font_2x.png',(18,26))
@@ -119,7 +119,7 @@ def init(mainpath,screen_res):
 	text_surfs['help001'] = gamefontsmall.RenderSentence('GUIDE YOUR CREW, INMATE BY INMATE, TO ESCAPE THE PRISON. GET ALL PLAYERS TO THESE EXIT TILES. LEAVE NO MAN BEHIND!', 400, 39)
 	text_surfs['help002'] = gamefontsmall.RenderSentence('GUARDS: THESE GUYS ARE EVERYWHERE. IF THEY CATCH ONE OF YOUR TEAM, IT`S BACK TO THE SLAMMER', 500, 26)
 	text_surfs['help003'] = gamefontsmall.RenderSentence('DOORS: YOU`LL NEED COLOUR-CODED KEYS FOR THESE DOORS', 400, 26)
-	text_surfs['help004'] = gamefontsmall.RenderSentence('BUTTONS: THESE CAN ACTIVATE DOORS', 400, 26)
+	text_surfs['help004'] = gamefontsmall.RenderSentence('BUTTONS: THESE CAN ACTIVATE OTHER DOORS WITH NO KEYS', 400, 26)
 	text_surfs['help005'] = gamefontsmall.RenderSentence('WEAK WALLS: IF YOU HAD A HAMMER, YOU COULD PROBABLY BREAK THESE DOWN', 400, 26)
 	text_surfs['help006'] = gamefontsmall.RenderSentence('FENCE: GUARDS CAN`T SEE YOU BEHIND THIS (PROBABLY). YOU COULD THROW AN ITEM OVER IT (LIKE A KEY)', 500, 26)
 	text_surfs['help007'] = gamefontsmall.RenderSentence('KEY: YOU`LL NEED THIS TO GET THROUGH SOME DOORS (PRESS SPACE): MAKE SURE TO MATCH THE COLOUR', 500, 26)
@@ -247,6 +247,7 @@ def init(mainpath,screen_res):
 	musicpaths = {}
 	musicpaths['tense_chase'] = os.path.join(mainpath,'data','music','tense_chase.ogg')
 	musicpaths['sneaky'] = os.path.join(mainpath,'data','music','sneaky.ogg')
+	musicpaths['title_music'] = os.path.join(mainpath,'data','music','title_music.ogg')
 	
 	global level_music
 	level_music = ['sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky','sneaky']
