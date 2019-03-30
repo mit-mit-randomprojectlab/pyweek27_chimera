@@ -35,12 +35,12 @@ def init_resources(mainpath):
 	load_spritesheet('items', mainpath, 'items_1x.png', (255, 0, 255), 6, 3)
 
 	# Text data for draw modes
-	font_draw = pygame.font.SysFont("arial", 12)
-	resources['text_occ'] = font_draw.render('Occupancy Mode', True, (255, 255, 255))
-	resources['text_bg'] = font_draw.render('Background Tile Mode', True, (255, 255, 255))
-	resources['text_mg'] = font_draw.render('Midground Tile Mode', True, (255, 255, 255))
-	resources['text_fg'] = font_draw.render('Foreground Tile Mode', True, (255, 255, 255))
-	resources['text_item'] = font_draw.render('Item Mode (q to quit back to tiles)', True, (255, 255, 255))
+	resources['font'] = pygame.font.SysFont("arial", 12)
+	resources['text_occ'] = resources['font'].render('Occupancy Mode', True, (255, 255, 255))
+	resources['text_bg'] = resources['font'].render('Background Tile Mode', True, (255, 255, 255))
+	resources['text_mg'] = resources['font'].render('Midground Tile Mode', True, (255, 255, 255))
+	resources['text_fg'] = resources['font'].render('Foreground Tile Mode', True, (255, 255, 255))
+	resources['text_item'] = resources['font'].render('Item Mode (q to quit back to tiles)', True, (255, 255, 255))
 
 def load_spritesheet(name, mainpath, filename, color, w, h):
 	resources[name] = pygame.image.load(os.path.join(mainpath, 'data', 'gfx', filename)).convert()
@@ -138,6 +138,7 @@ class LevelEditor(GameScene):
 
 		self.layer_key = ['layerocc', 'layer_b', 'layer_m', 'layer_f', 'layerspawn']
 		self.draw_offset = (16, 32) # fix up
+		self.tileNum = 0
 		self.draw_offset_palette = (self.window_size[0] - self.tilesize - self.npal_x * self.tilesize, 2 * self.tilesize)
 		self.draw_offset_palette = (2 * 16  +  800, 2 * 16)
 		self.reset_userdata()
@@ -192,7 +193,7 @@ class LevelEditor(GameScene):
 		if i < 0 or i >= msx or j < 0 or j >= msy:
 			return
 		self.level.data['tilemap']['layerocc'][msx * j + i] = self.level.data['tilemap']['layerocc'][int(msx * j + i)]  +  1
-		if self.level.data['tilemap']['layerocc'][msx * j + i] > 2:
+		if self.level.data['tilemap']['layerocc'][msx * j + i] > 3:
 			self.level.data['tilemap']['layerocc'][msx * j + i] = 0
 
 	def SetOcc(self, x, y, value):
@@ -463,6 +464,7 @@ class LevelEditor(GameScene):
 			if (self.mouse_pos[0] > offx and self.mouse_pos[1] > offy and self.mouse_pos[0] < (offx + sx) and self.mouse_pos[1] < (offy + sy)):
 				coords = (int((self.mouse_pos[0] - offx)/self.tilesize), int((self.mouse_pos[1] - offy)/self.tilesize))
 				tile = msx * coords[1] + coords[0]
+				self.tileNum = tile
 				if coords[0] >= 0 and coords[0] < msx and coords[1] >= 0 and coords[1] < msy:
 					if self.objectdrawtype == 'none':
 						if self.tilemode == 0 and fresh:
@@ -570,6 +572,9 @@ class LevelEditor(GameScene):
 		else:
 			if self.objectdrawtype == 'item':
 				screen.blit(resources['text_item'], (sx/2, 10))
+
+		pos = resources['font'].render(str(self.tileNum), True, (255, 255, 255))
+		screen.blit(pos, (10, 10))
 
 		# draw tile guides
 		if self.guides == True:
