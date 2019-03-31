@@ -107,7 +107,7 @@ class Level_Behaviours(object):
 		if self.buttonProgress == 4:
 			self.parent.tiledlayers.passages[3].Open()
 		if self.parent.tiledlayers.buttons[5].state == True:
-			self.parent.tiledlayers.passages[4].Open()
+			self.parent.tiledlayers.passages[5].Open()
 
 
 	def testbig003_init(self):
