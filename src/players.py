@@ -160,6 +160,8 @@ class Inmate(object):
 					dist = pow(cx-self.x,2)+pow(cy-self.y,2)
 					if dist < (32*32):
 						passage.Open()
+						return True
+		return False
 	
 	def UpdateMotion(self):
 	
@@ -240,7 +242,9 @@ class Inmate(object):
 					if unlocked:
 						return
 				elif self.item.id == 15: # hammer
-					self.CheckBreakWalls()
+					broke = self.CheckBreakWalls()
+					if broke:
+						return
 				if abs(vx) > 0 and abs(vy) > 0:
 					speed = 6
 				else:
